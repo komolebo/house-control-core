@@ -1,10 +1,12 @@
 import React from 'react';
-import './App.css';
+// import './App.css';
+import SensorsList from './Sensors/SensorsList';
+
 
 function App() {
   return (
   <div>
-    <h1>A s</h1>
+    <SensorsList />
   </div>
   )
 }
