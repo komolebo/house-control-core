@@ -3,6 +3,9 @@
 import os
 import sys
 
+from app.Threads.Dispatcher import Dispatcher
+from app.Threads.ThreadMgr import ThreadMgr
+
 
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'house_control.settings')
@@ -18,4 +21,5 @@ def main():
 
 
 if __name__ == '__main__':
+    ThreadMgr.start_threads()
     main()

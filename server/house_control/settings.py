@@ -26,27 +26,8 @@ SECRET_KEY = 'xg$=q3phnjd($^6!pxutt*mxq23z9_=tx)*x@xb5kw6qk*99k@'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-# ALLOWED_HOSTS = [
-#     '192.168.1.12',
-#     '127.0.0.1'
-# ]
 
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_METHODS = (
-    'GET',
-    'POST',
-    'PUT',
-    'PATCH',
-    'DELETE',
-    'OPTIONS'
-)
-
-# Application definition
-# CORS_ORIGIN_WHITELIST = (
-#     'http://localhost:3000',
-#     'http://localhost:8000',
-#     'http://192.168.1.12',
-# )
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -140,4 +121,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Enable/disable threads
+THREAD__RF_MNGR = True
+THREAD__WIFI_MNGR = True
 
