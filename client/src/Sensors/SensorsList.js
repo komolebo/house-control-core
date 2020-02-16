@@ -3,6 +3,10 @@ import './SensorsList.css';
 import SensorItem  from './SensorItem';
 import { Sensor } from './SensorItem';
 import { popupAddNewSensor, SensorPopup } from "./SensorPopup";
+import axios from 'axios';
+
+axios.defaults.baseURL = 'http://192.168.1.12:8000/';
+
 
 const displayProperties = [
     'ID',
@@ -14,19 +18,14 @@ const displayProperties = [
 ]
 
 class SensorsList extends Component {
-    state = {
-        sensors: [
-            new Sensor('0x1234', 'Climate', 0, 'Informing about humidity and temperature'),
-            new Sensor('0x4321', 'Leak', 1, 'Informing about water leaking in home'),
-            new Sensor('0x1234', 'Gas', 0, 'Informing about humidity and temperature'),
-            new Sensor('0x4321', 'Smoke', 1, 'Informing about water leaking in home'),
-            new Sensor('0x1234', 'Tamper', 0, 'Informing about humidity and temperature'),
-            new Sensor('0x1234', 'Unknown', 0, 'Informing about humidity and temperature'),
-        ]
-    }
+    state = { sensors: [] }
 
     constructor(props) {
         super();
+        axios
+            .get('api/sensors/')
+            .then(response => this.setState({sensors: response.data}))
+            .catch(err => console.log(err));
     }
 
     addSensorItem(sn, name="Generic", status=true, description="Generic device, please append new data here") {
@@ -43,7 +42,15 @@ class SensorsList extends Component {
     }
 
     onRemoveItem(sensorId) {
-        this.setState({sensors: this.state.sensors.filter(item => (item.id !== sensorId))});
+        console.log("removing " + sensorId);
+        axios
+            .delete('api/sensors/' + sensorId, {data: sensorId})
+            .then(res => {
+                this.setState({sensors: this.state.sensors.filter(item => (item.id !== sensorId))});
+            })
+            .catch(err => {
+                console.log(err);
+            })
     }
 
     render() {
