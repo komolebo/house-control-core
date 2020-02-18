@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
-import os
 import sys
 
-from app.Threads.Dispatcher import Dispatcher
+import os
+
 from app.Threads.ThreadMgr import ThreadMgr
 
 
@@ -23,3 +23,4 @@ def main():
 if __name__ == '__main__':
     ThreadMgr.start_threads()
     main()
+

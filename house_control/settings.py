@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
+
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -38,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
-    'app'
+    'app',
+    'channels'
 ]
 
 MIDDLEWARE = [
@@ -71,6 +73,17 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'house_control.wsgi.application'
+ASGI_APPLICATION = 'house_control.routing.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "CONFIG": {
+            "hosts": [('0.0.0.0', 6379)],
+        },
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+    },
+}
+
 
 
 # Database

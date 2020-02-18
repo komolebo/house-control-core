@@ -1,5 +1,6 @@
+from django.conf.urls import include
 from django.contrib import admin
-from django.urls import path, include
+from django.urls.conf import path
 from rest_framework import routers
 from app import views
 
