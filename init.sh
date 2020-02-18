@@ -1,4 +1,3 @@
-cd ../server/
 sudo apt install virtualenv
 pip install --upgrade virtualenv
 
