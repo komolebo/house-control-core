@@ -8,8 +8,8 @@ from house_control.settings import *
 
 # register here new threads
 THREAD_CFG = [
-    (THREAD__RF_MNGR, WifiManager, MBox.RF),
-    (THREAD__WIFI_MNGR, RfManager, MBox.WIFI),
+    (THREAD__WIFI_MNGR, WifiManager, MBox.WIFI),
+    (THREAD__RF_MNGR, RfManager, MBox.RF),
 ]
 
 class ThreadMgr():

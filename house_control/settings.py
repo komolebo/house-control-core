@@ -75,6 +75,15 @@ TEMPLATES = [
 WSGI_APPLICATION = 'house_control.wsgi.application'
 ASGI_APPLICATION = 'house_control.routing.application'
 
+CHANNEL_LAYERS = {
+    "default": {
+        "CONFIG": {
+            "hosts": [('0.0.0.0', 6379)],
+        },
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+    },
+}
+
 
 
 # Database
@@ -125,16 +134,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "asgi_redis.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [os.environ.get('REDIS_URL', 'redis://0.0.0.0:6379')],
-        },
-        "ROUTING": "chat.routing.channel_routing",
-    },
-}
 
 # Enable/disable threads
 THREAD__RF_MNGR = True
