@@ -24,6 +24,7 @@ class ThreadMgr():
                 t = app_thread(mbox)
                 t.start()
                 ThreadMgr.threads.append(t)
+        Dispatcher.send_msg(MBox.WIFI, "do something")
 
 
 
