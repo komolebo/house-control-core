@@ -12,7 +12,7 @@ THREAD_CFG = [
     (THREAD__RF_MNGR, RfManager, MBox.RF),
 ]
 
-class ThreadMgr():
+class ThreadMgr:
     threads = []
 
     @staticmethod
@@ -22,6 +22,7 @@ class ThreadMgr():
             if enabled:
                 mbox = Dispatcher.create_mbox(mbox_id)
                 t = app_thread(mbox)
+                t.setDaemon(True)
                 t.start()
                 ThreadMgr.threads.append(t)
 
