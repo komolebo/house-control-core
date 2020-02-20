@@ -1,45 +1,47 @@
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
+from channels.layers import get_channel_layer
 from rest_framework.utils import json
 
-class SensorConsumer(WebsocketConsumer):
-    GROUP_NAME = "base"
-    CHANNEL_NAME = "channel"
+from house_control.settings import CHANNEL_GROUP_NAME
+
+
+class EventConsumer(WebsocketConsumer):
 
     def connect(self):
-        self.group_name = self.GROUP_NAME
-        self.channel_name = self.CHANNEL_NAME
-        self.channel_layer.group_add(
-            self.group_name,
+        layer = get_channel_layer()
+
+        async_to_sync(self.channel_layer.group_add)(
+            CHANNEL_GROUP_NAME,
             self.channel_name
         )
         self.accept()
-        print('Group {} connected'.format(self.group_name))
+        print('Group {} connected to {}'.format(CHANNEL_GROUP_NAME, layer))
 
     def disconnect(self, code):
-        self.channel_layer.group_discard(
-            self.group_name,
+        layer = get_channel_layer()
+        async_to_sync(layer.group_discard)(
+            CHANNEL_GROUP_NAME,
             self.channel_name
         )
-        print('Group {} disconnected'.format(self.group_name))
+        print('Group {} disconnected'.format(CHANNEL_GROUP_NAME))
 
     def receive(self, text_data=None, bytes_data=None):
-        print('____________________message received')
+        print('Message {} received'.format(text_data))
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
 
-        self.channel_layer.group_send(
-            self.group_name, {
-                "type": 'send_message_to_front',
+        async_to_sync(self.channel_layer.group_send)(
+            CHANNEL_GROUP_NAME, {
+                "type": 'send_msg_to_front',
                 "message": message
             }
         )
 
-    def send_message_to_front(self, event):
-        print (event)
+    def send_msg_to_front(self, event):
         message = event['message']
-        print('sending {} to front'.format(message))
 
-        self.send(text_data=json.dumps({
+        async_to_sync(self.send(text_data=json.dumps({
             'message': message
-        }))
+        })))
+        print('sent "{}" to front'.format(message))
