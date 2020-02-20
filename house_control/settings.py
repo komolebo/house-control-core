@@ -139,3 +139,4 @@ STATIC_URL = '/static/'
 THREAD__RF_MNGR = True
 THREAD__WIFI_MNGR = True
 
+CHANNEL_GROUP_NAME = 'base'
