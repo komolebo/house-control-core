@@ -3,6 +3,7 @@ from channels.generic.websocket import WebsocketConsumer
 from channels.layers import get_channel_layer
 from rest_framework.utils import json
 
+from house_control.events import EventHandler
 from house_control.settings import CHANNEL_GROUP_NAME
 
 
@@ -31,12 +32,14 @@ class EventConsumer(WebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
 
-        async_to_sync(self.channel_layer.group_send)(
-            CHANNEL_GROUP_NAME, {
-                "type": 'send_msg_to_front',
-                "message": message
-            }
-        )
+        EventHandler.event(message)
+
+        # async_to_sync(self.channel_layer.group_send)(
+        #     CHANNEL_GROUP_NAME, {
+        #         "type": 'send_msg_to_front',
+        #         "message": message
+        #     }
+        # )
 
     def send_msg_to_front(self, event):
         message = event['message']
