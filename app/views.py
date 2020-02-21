@@ -1,9 +1,8 @@
-from django.shortcuts import render
-from django.http import HttpResponse
 from rest_framework import viewsets
-from rest_framework.response import Response
+
+from app.models.models import Sensor
 from .serializers import SensorSerializer
-from .models import Sensor
+
 
 # Create your views here.
 class SensorView(viewsets.ModelViewSet):

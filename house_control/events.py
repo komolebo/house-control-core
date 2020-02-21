@@ -8,9 +8,9 @@ class Notifications:
     SENSOR_LIST_CHANGED = "sensor_list_changed"
 
 
-class Events:
-    SENSOR_REMOVE = "sensor_remove"
-    SENSOR_ADD_REQUEST = "sensor_add_request"
+# class Events:
+#     SENSOR_REMOVE_REQUEST = "sensor_remove"
+#     SENSOR_ADD_REQUEST = "sensor_add"
 
 
 class EventHandler:
@@ -24,12 +24,12 @@ class EventHandler:
             cls.events_data[event].append(callback)
 
     @classmethod
-    def event(cls, event):
+    def event(cls, event, data):
         if event in cls.events_data:
-            [callback() for callback in cls.events_data[event]]
+            [callback(data) for callback in cls.events_data[event]]
 
 
-def send_event_to_front(notification, data):
+def send_notification_to_front(notification, data):
     layer = get_channel_layer()
     async_to_sync(layer.group_send)(
         CHANNEL_GROUP_NAME, {

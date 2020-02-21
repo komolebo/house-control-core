@@ -1,4 +1,4 @@
-from app.middleware.AppThread import AppThread
+from app.middleware.threads import AppThread
 
 
 class RfManager(AppThread):

@@ -9,4 +9,4 @@ class Sensor(models.Model):
     sn = models.CharField(max_length=18)
 
     def _str_(self):
-        self.name + " " + self.sn
+        return "{} {}".format(self.name, self.sn)

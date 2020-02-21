@@ -136,7 +136,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Enable/disable threads
-THREAD__RF_MNGR = True
 THREAD__WIFI_MNGR = True
+THREAD__RF_MNGR = True
+THREAD__SENSOR_MNGR = True
 
 CHANNEL_GROUP_NAME = 'base'

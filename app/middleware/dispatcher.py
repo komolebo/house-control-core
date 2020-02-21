@@ -1,7 +1,7 @@
 from queue import Queue
 
-from app.middleware.Mbox import MBox
-from app.middleware.Messages import Messages
+from app.middleware.mailbox import MBox
+from app.middleware.messages import Messages
 
 
 class Subscriptions:

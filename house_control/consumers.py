@@ -29,10 +29,11 @@ class EventConsumer(WebsocketConsumer):
 
     def receive(self, text_data=None, bytes_data=None):
         print('Message {} received'.format(text_data))
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
+        # text_data_json = json.loads(text_data)
+        # message = text_data_json['message']
+        # payload = text_data_json['payload']
 
-        EventHandler.event(message)
+        # EventHandler.event(message, payload)
 
         # async_to_sync(self.channel_layer.group_send)(
         #     CHANNEL_GROUP_NAME, {
