@@ -6,10 +6,10 @@ class AppThread(threading.Thread):
         super().__init__()
         self.mbox = mbox
 
-    def on_message(self, msg):
+    def on_message(self, msg, data):
         raise NotImplementedError()
 
     def run(self):
         while True:
-            msg = self.mbox.get()
-            self.on_message(msg)
+            msg, data = self.mbox.get()
+            self.on_message(msg, data)

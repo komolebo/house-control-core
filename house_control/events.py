@@ -37,4 +37,3 @@ def send_event_to_front(notification):
             'message': notification
         }
     )
-
