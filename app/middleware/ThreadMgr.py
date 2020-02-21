@@ -1,7 +1,7 @@
 import threading
 
 from app.RfManager.RfManager import RfManager
-from app.Threads.Dispatcher import Dispatcher, MBox
+from app.middleware.Dispatcher import Dispatcher, MBox
 from app.WifiManager.WifiManager import WifiManager
 from house_control.settings import *
 

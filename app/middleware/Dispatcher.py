@@ -1,16 +1,7 @@
 from queue import Queue
 
-from enum import auto, Enum
-
-
-class MBox:
-    WIFI = 0
-    RF = 1
-
-
-class Messages(Enum):
-    TEST_MSG = auto()
-    TEST_MSG2 = auto()
+from app.middleware.Mbox import MBox
+from app.middleware.Messages import Messages
 
 
 class Subscriptions:

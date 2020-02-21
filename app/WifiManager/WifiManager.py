@@ -1,6 +1,6 @@
 from time import sleep
 
-from app.Threads.AppThread import AppThread
+from app.middleware.AppThread import AppThread
 from house_control.events import send_event_to_front, Notifications
 
 

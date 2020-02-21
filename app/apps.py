@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 
-from app.Threads.Dispatcher import Dispatcher, MBox
-from app.Threads.ThreadMgr import ThreadMgr
+from app.middleware.Dispatcher import Dispatcher, MBox
+from app.middleware.ThreadMgr import ThreadMgr
 
 
 class ApplicationConfig(AppConfig):
@@ -9,3 +9,4 @@ class ApplicationConfig(AppConfig):
 
     def ready(self):
         ThreadMgr.start_threads()
+        Dispatcher.send_msg(MBox.WIFI, "wifi msg")
