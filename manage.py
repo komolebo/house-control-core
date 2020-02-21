@@ -2,7 +2,7 @@
 """Django's command-line utility for administrative tasks."""
 import sys
 import os
-from app.Threads.ThreadMgr import ThreadMgr
+from app.middleware.ThreadMgr import ThreadMgr
 
 
 def main():

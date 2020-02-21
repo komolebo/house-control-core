@@ -29,11 +29,12 @@ class EventHandler:
             [callback() for callback in cls.events_data[event]]
 
 
-def send_event_to_front(notification):
+def send_event_to_front(notification, data):
     layer = get_channel_layer()
     async_to_sync(layer.group_send)(
         CHANNEL_GROUP_NAME, {
             'type': 'send_msg_to_front',
-            'message': notification
+            'message': notification,
+            'payload': data
         }
     )

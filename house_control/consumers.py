@@ -42,9 +42,8 @@ class EventConsumer(WebsocketConsumer):
         # )
 
     def send_msg_to_front(self, event):
-        message = event['message']
-
         async_to_sync(self.send(text_data=json.dumps({
-            'message': message
+            'message': event['message'],
+            'payload': event['payload']
         })))
-        print('sent "{}" to front'.format(message))
+        print('sent "{}" to front'.format(event['message']))
