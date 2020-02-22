@@ -33,4 +33,4 @@ class ApplicationConfig(AppConfig):
 
     def ready(self):
         ThreadMgr.start_threads()
-        Dispatcher.send_msg(Messages.TEST_MSG, "test msg")
+        Dispatcher.send_msg(Messages.TEST_MSG, {"message": "test msg"})

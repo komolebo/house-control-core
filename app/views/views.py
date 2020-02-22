@@ -1,7 +1,9 @@
 from rest_framework import viewsets
 
+from app.middleware.dispatcher import Dispatcher
+from app.middleware.messages import Messages
 from app.models.models import Sensor
-from .serializers import SensorSerializer
+from app.serializers import SensorSerializer
 
 
 # Create your views here.
@@ -26,14 +28,14 @@ class SensorView(viewsets.ModelViewSet):
     # def retrieve(self, request, pk=None):
     #     pass
 
-    # def update(self, request, pk=None):
-    #     pass
+    # def update(self, request, pk=None, **kwargs):
+    #     print("update")
 
     # def partial_update(self, request, pk=None):
     #     pass
 
-    # def destroy(self, request, pk=None):
-    #     print("i'm called")
 
-    # def destroy(self, request, *args, **kwargs):
-    #     pass
+    def destroy(self, request, *args, **kwargs):
+        sensor_id = self.get_object().id
+        Dispatcher.send_msg(Messages.SENSOR_REMOVED_FROM_FRONT, {"id": sensor_id})
+        return super(SensorView, self).destroy(request, *args, **kwargs)
