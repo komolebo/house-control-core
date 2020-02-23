@@ -4,12 +4,12 @@ from app.middleware.dispatcher import Dispatcher, MBox
 from app.middleware.messages import Messages
 from app.applications.rf.rf_manager import RfManager
 from app.applications.wifi.wifi_manager import WifiManager
-from house_control.settings import THREAD__WIFI_MNGR, THREAD__RF_MNGR
-
+from house_control.settings import THREAD__WIFI_MNGR, THREAD__RF_MNGR, THREAD__DEV_MNGR
 
 THREAD_CFG = [
     (THREAD__WIFI_MNGR, WifiManager, MBox.WIFI),
     (THREAD__RF_MNGR, RfManager, MBox.RF),
+    # (THREAD__DEV_MNGR, DevManager, MBox.DEV_HANDLER),
 ]
 
 

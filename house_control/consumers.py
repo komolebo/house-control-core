@@ -7,6 +7,7 @@ from house_control.events import EventHandler
 from house_control.settings import CHANNEL_GROUP_NAME
 
 
+
 class EventConsumer(WebsocketConsumer):
 
     def connect(self):

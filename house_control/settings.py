@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders',
     'rest_framework',
     'app',
     'channels'
@@ -138,6 +137,6 @@ STATIC_URL = '/static/'
 # Enable/disable threads
 THREAD__WIFI_MNGR = True
 THREAD__RF_MNGR = True
-THREAD__SENSOR_MNGR = True
+THREAD__DEV_MNGR = True
 
 CHANNEL_GROUP_NAME = 'base'
