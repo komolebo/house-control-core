@@ -6,7 +6,8 @@ from .settings import CHANNEL_GROUP_NAME
 class Notifications:
     # any sensor data update
     SENSOR_LIST_CHANGED = "sensor_list_changed"
-
+    LOST_COMM_DEVICE = "device_lost_comm"
+    CLEAR_LOST_COMM_DEVICE = "clear_device_lost_comm"
 
 # class Events:
 #     SENSOR_REMOVE_REQUEST = "sensor_remove"

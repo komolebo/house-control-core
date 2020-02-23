@@ -13,3 +13,5 @@ class Messages(AbstractNamedEnumsInClass):
     TEST_MSG = create_id()
     TEST_MSG2 = create_id()
     SENSOR_REMOVED_FROM_FRONT = create_id()
+    DEVICE_LOST_COMM = create_id()
+    CLEAR_DEVICE_LOST_COMM = create_id()

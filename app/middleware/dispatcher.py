@@ -19,6 +19,14 @@ class Subscriptions:
 
         Messages.SENSOR_REMOVED_FROM_FRONT: [
             MBox.DEV_HANDLER
+        ],
+
+        Messages.DEVICE_LOST_COMM: [
+            MBox.DEV_HANDLER
+        ],
+
+        Messages.CLEAR_DEVICE_LOST_COMM: [
+            MBox.DEV_HANDLER
         ]
     }
 
@@ -27,7 +35,9 @@ class Validation:
     validation_info = {
         Messages.TEST_MSG: ['id', 'message'],
         Messages.TEST_MSG2: ['id'],
-        Messages.SENSOR_REMOVED_FROM_FRONT: ['id']
+        Messages.SENSOR_REMOVED_FROM_FRONT: ['id'],
+        Messages.DEVICE_LOST_COMM: ["id"],
+        Messages.CLEAR_DEVICE_LOST_COMM: ["id"]
     }
 
     @classmethod
