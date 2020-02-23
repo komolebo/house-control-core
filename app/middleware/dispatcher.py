@@ -72,4 +72,5 @@ class Dispatcher:
             raise Exception("Message {} is not validated, incorrect keys detected".format(msg_name))
 
         if msg_id in Subscriptions.subscribers_info:
+            print(">> " + Messages.get_name_by_enum_id(msg_id) + " : " + str(data))
             [cls.__put_msg_in_mbox(mbox, (msg_id, data)) for mbox in Subscriptions.subscribers_info[msg_id]]
