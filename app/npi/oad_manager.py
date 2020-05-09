@@ -1,15 +1,10 @@
 from app.npi.npi_manager import NpiManager
 from app.npi.oad_fsm import OadFsm
 
-CONN_HANDLE = 0x0
-
-import os
-print(os.path.abspath(os.getcwd()))
-
 
 if __name__ == '__main__':
     npi = NpiManager('/dev/ttyUSB0')
-    oadFsm = OadFsm(CONN_HANDLE, npi)
+    oadFsm = OadFsm(npi)
 
     oadFsm.start()
 

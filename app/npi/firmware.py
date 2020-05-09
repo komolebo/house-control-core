@@ -9,22 +9,24 @@ class FirmwareBin:
         with open(self.bin_path, "rb") as f:
             self.binary_data = list(f.read())
             self.firmware_len = len(list(self.binary_data))
-            self.curr_block = 0
 
     def set_mtu_size(self, mtu_size):
-        self.block_size = mtu_size + self.BLOCK_ID_BYTE_LEN
-        self.blocks_num = self.firmware_len / mtu_size + (self.firmware_len % mtu_size)
+        self.block_size = mtu_size - self.BLOCK_ID_BYTE_LEN
+        self.blocks_num = int(self.firmware_len / self.block_size) + (self.firmware_len % self.block_size > 0)
 
     def get_blocks_number(self):
         return self.blocks_num
 
-    def is_read_complete(self):
-        return self.curr_block >= self.blocks_num
+    def get_block(self, block_id):
+        # convert int to 4 byte array
+        block_id_bytes = list(struct.pack('<I', block_id))
 
-    def get_next_block(self):
-        block_id_bytes = list(struct.pack('>I', self.curr_block))
-        if self.curr_block < self.blocks_num:
-            return block_id_bytes + self.binary_data[self.curr_block * self.block_size : (self.curr_block + 1) * self.block_size]
+        # block number from [0..last-1]
+        if block_id < self.blocks_num:
+            return block_id_bytes + self.binary_data[block_id * self.block_size : (block_id + 1) * self.block_size]
+        # block number is last
+        if block_id == self.blocks_num:
+            return block_id_bytes + self.binary_data[block_id * self.block_size : self.firmware_len -1 ]
         return None
 
     # meta data getters

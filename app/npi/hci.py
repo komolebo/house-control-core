@@ -9,9 +9,11 @@ class Type:
     HostControllerAndBaseband = 0x03
     HciEvent = 0x04
 
+
 class EventCode:
     HCI_LE_ExtEvent = 0x00FF
     HCI_LE_GenericReportEvent = 0x003E
+
 
 class OpCode:
     # transmit codes
@@ -24,6 +26,7 @@ class OpCode:
     ATT_ExchangeMTUReq = 0xFD02
     GATT_WriteNoRsp = 0xFDB6
     GATT_WriteLongCharValue = 0xFD96
+
 
 class Event:
     # receive codes
@@ -40,6 +43,8 @@ class Event:
     GAP_TerminateLink = 0x0606
 
 
+# ------------------------------------------------------------------------
+# Abstract Tx structure class
 class TxPackBase:
     def __init__(self):
         self.buf_str = None
@@ -94,7 +99,7 @@ class TxPackWriteNoRsp(TxPackBase):
 
 
 # ------------------------------------------------------------------------
-# Write no response
+# Write long char values
 class TxPackWriteLongCharValue(TxPackBase):
     def __init__(self, type, op_code, data_length, conn_handle, handle, offset, value):
         super().__init__()
@@ -183,3 +188,12 @@ class RxMsgGapHciExtentionCommandStatus:
          self.status,
          self.op_code,
          self.data_length) = fields
+
+class RxMsgGapTerminateLink:
+    pattern = '<HBHB'
+    def __init__(self, data_bytes):
+        fields = struct.unpack(self.pattern, data_bytes)
+        (self.event,
+         self.status,
+         self.conn_handle,
+         self.reason) = fields
