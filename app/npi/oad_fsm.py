@@ -1,33 +1,15 @@
-from app.npi.hci import EventCode, OpCode, Type, Event, RxMsgGapHciExtentionCommandStatus, \
+import struct
+
+from app.npi.firmware import FirmwareBin
+from app.npi.hci import OpCode, Type, Event, RxMsgGapHciExtentionCommandStatus, \
     STATUS_SUCCESS, RxMsgAttWriteRsp, TxPackWriteCharValue, TxPackAttExchangeMtuReq, RxMsgAttExchangeMtuRsp, \
     RxMsgAttMtuUpdatedEvt, RxMsgAttHandleValueNotification, TxPackWriteNoRsp, TxPackWriteLongCharValue, \
     RxMsgAttExecuteWriteRsp
-from app.npi.npi_manager import NpiManager
-
 
 SERVER_RX_MTU_SIZE = 0x00F7
-block_size = 0x0
+mtu_size = 0x0
 
 
-class FirmwareBin:
-    def __init__(self, bin_path):
-        self.bin_path = bin_path
-        with open(self.bin_path, "rb") as f:
-            self.binary_data = list(f.read())
-            self.firmware_len = len(list(self.binary_data))
-            self.curr_block = 0
-
-    def set_mtu_size(self, mtu_size):
-        self.mtu_size = mtu_size
-        self.blocks_num = self.firmware_len / mtu_size + (self.firmware_len % mtu_size)
-
-    def get_blocks_number(self):
-        return self.blocks_num
-
-    def get_next_block(self):
-        if self.curr_block < self.blocks_num:
-            return self.binary_data[self.curr_block * self.mtu_size : (self.curr_block + 1) * self.mtu_size]
-        return None
 
 class State:
     def __init__(self, fsm):
@@ -35,13 +17,14 @@ class State:
         self.fsm = fsm
 
     def handle_error(self):
+        print('error happened')
         self.error = 1
         # TODO: define func later
         assert "error happened"
 
     def handle_notifications_on_setup(self, hci_msg_rx):
         if hci_msg_rx.get_event() == Event.ATT_HandleValueNotification:
-            msg_data = RxMsgAttHandleValueNotification(hci_msg_rx.msg_data, 3)
+            msg_data = RxMsgAttHandleValueNotification(hci_msg_rx.data, 3)
 
             if msg_data.status == STATUS_SUCCESS and msg_data.conn_handle == self.fsm.conn_handle:
                 # TODO: handle here receive MTU size
@@ -62,7 +45,7 @@ class StateOadNotifyEnable(State):
     NOTIFY_REQ_BYTE_LEN = 0x06
     IMG_ID_CFG_HANDLE = 0x000C
     IMG_CTRL_CFG_HANDLE = 0x0014
-    CFG_ENABLE_VALUE = 0x0100
+    CFG_ENABLE_VALUE = 0x0001
     REQUIRED_ACK_NUM = 2
 
     def __init__(self, fsm):
@@ -82,6 +65,7 @@ class StateOadNotifyEnable(State):
         self._enable_identify_notify()
 
     def _enable_identify_notify(self):
+        print('enable identify notification')
         # Enable image identify config
         tx_msg = TxPackWriteCharValue(Type.LinkCtrlCommand,
                                       OpCode.GATT_WriteCharValue,
@@ -92,6 +76,7 @@ class StateOadNotifyEnable(State):
         self.fsm.npi.send_binary_data(tx_msg.buf_str)
 
     def _enable_control_notify(self):
+        print('enable control notification')
         # enable control notification config
         tx_msg = TxPackWriteCharValue(Type.LinkCtrlCommand,
                                       OpCode.GATT_WriteCharValue,
@@ -102,10 +87,12 @@ class StateOadNotifyEnable(State):
         self.fsm.npi.send_binary_data(tx_msg.buf_str)
 
     def on_event(self, hci_msg_rx):
+        print('receive event in StateOadNotifyEnable')
         valid_resp = False
         # host stack ACK received:
         if hci_msg_rx.get_event() == Event.GAP_HCI_ExtentionCommandStatus:
-            msg_data = RxMsgGapHciExtentionCommandStatus(hci_msg_rx.msg_data)
+            print('receive GAP_HCI_ExtentionCommandStatus')
+            msg_data = RxMsgGapHciExtentionCommandStatus(hci_msg_rx.data)
 
             # check wanted ACK type
             if len(self.identify_ack_getlist):
@@ -128,7 +115,8 @@ class StateOadNotifyEnable(State):
 
         # target device's ACK received:
         elif hci_msg_rx.get_event() == Event.ATT_WriteRsp:
-            msg_data = RxMsgAttWriteRsp(hci_msg_rx.msg_data)
+            print('receive ATT_WriteRsp')
+            msg_data = RxMsgAttWriteRsp(hci_msg_rx.data)
 
             # check wanted ACK type
             if len(self.identify_ack_getlist):
@@ -146,6 +134,7 @@ class StateOadNotifyEnable(State):
 
         # all notifications are enabled, transit to next state
         if not len(self.identify_ack_getlist) and not len(self.control_ack_getlist):
+            print('transit from STATE_ENABLE to STATE_MTU')
             self.fsm.transit(StateOadExchangeMtu)
         # identify notification cfg just ACK'ed
         elif not len(self.identify_ack_getlist) and len(self.control_ack_getlist) == self.REQUIRED_ACK_NUM:
@@ -163,12 +152,13 @@ class StateOadExchangeMtu(State):
         self.mtu_ack_getlist = [
             Event.GAP_HCI_ExtentionCommandStatus,
             Event.ATT_ExchangeMTURsp,
-            Event.ATT_MtuUpdatedEvt # TODO: not sure if necessarily required
+            # Event.ATT_MtuUpdatedEvt # TODO: not sure if necessarily required
         ]
 
         self._exchange_mtu_size()
 
     def _exchange_mtu_size(self):
+        print('exchange mtu size')
         tx_msg = TxPackAttExchangeMtuReq(Type.LinkCtrlCommand,
                                          OpCode.ATT_ExchangeMTUReq,
                                          self.EXCHANGE_MTU_REQ_BYTE_LEN,
@@ -180,7 +170,8 @@ class StateOadExchangeMtu(State):
         valid_resp = False
 
         if hci_msg_rx.get_event() == Event.GAP_HCI_ExtentionCommandStatus:
-            msg_data = RxMsgGapHciExtentionCommandStatus(hci_msg_rx.msg_data)
+            print('receive GAP_HCI_ExtentionCommandStatus')
+            msg_data = RxMsgGapHciExtentionCommandStatus(hci_msg_rx.data)
 
             if msg_data.status == STATUS_SUCCESS:
                 self.mtu_ack_getlist.remove(msg_data.event)
@@ -189,7 +180,8 @@ class StateOadExchangeMtu(State):
                 self.handle_error()
 
         elif hci_msg_rx.get_event() == Event.ATT_ExchangeMTURsp:
-            msg_data = RxMsgAttExchangeMtuRsp(hci_msg_rx.msg_data)
+            print('receive ATT_ExchangeMTURsp')
+            msg_data = RxMsgAttExchangeMtuRsp(hci_msg_rx.data)
 
             if msg_data.status == STATUS_SUCCESS:
                 self.mtu_ack_getlist.remove(msg_data.event)
@@ -198,6 +190,7 @@ class StateOadExchangeMtu(State):
                 self.handle_error()
 
         elif hci_msg_rx.get_event() == Event.ATT_MtuUpdatedEvt:
+            print('receive ATT_MtuUpdatedEvt')
             msg_data = RxMsgAttMtuUpdatedEvt(hci_msg_rx.msg_data)
 
             if msg_data.status == STATUS_SUCCESS:
@@ -218,6 +211,8 @@ class StateOadExchangeMtu(State):
 class StateOadSetControl(State):
     OAD_EXT_CTRL_GET_BLK_SZ = 0x01
     OAD_EXT_CTRL_START_OAD = 0x03
+    OAD_EXT_CTRL_ENABLED_IMG = 0x04
+
     SET_CTRL_REQ_BYTE_LEN = 0x05
     CONTROL_VALUE_HANDLE = 0x0013
 
@@ -228,23 +223,31 @@ class StateOadSetControl(State):
             Event.ATT_HandleValueNotification
         ]
         self.ctrl_command = param
+        if self.ctrl_command == self.OAD_EXT_CTRL_GET_BLK_SZ:
+            self.exp_value_len_resp = 3
+        elif self.ctrl_command == self.OAD_EXT_CTRL_START_OAD:
+            self.exp_value_len_resp = 6
+
         self._set_control_value(self.ctrl_command)
 
     def _set_control_value(self, value):
+        print('setting control value:', hex(value))
+        value_arr = bytearray([value])
         tx_msg = TxPackWriteNoRsp(Type.LinkCtrlCommand,
                                   OpCode.GATT_WriteNoRsp,
                                   self.SET_CTRL_REQ_BYTE_LEN,
                                   self.fsm.conn_handle,
                                   self.CONTROL_VALUE_HANDLE,
-                                  value)
+                                  value_arr)
         self.fsm.npi.send_binary_data(tx_msg.buf_str)
 
     def on_event(self, hci_msg_rx):
         valid_resp = False
-        global block_size
+        global mtu_size
 
         if hci_msg_rx.get_event() == Event.GAP_HCI_ExtentionCommandStatus:
-            msg_data = RxMsgGapHciExtentionCommandStatus(hci_msg_rx.msg_data)
+            print('receive GAP_HCI_ExtentionCommandStatus')
+            msg_data = RxMsgGapHciExtentionCommandStatus(hci_msg_rx.data)
 
             if msg_data.status == STATUS_SUCCESS:
                 self.control_ack_getlist.remove(msg_data.event)
@@ -253,10 +256,14 @@ class StateOadSetControl(State):
                 self.handle_error()
 
         elif hci_msg_rx.get_event() == Event.ATT_HandleValueNotification:
-            msg_data = RxMsgAttHandleValueNotification(hci_msg_rx.msg_data, 3)
+            print('receive ATT_HandleValueNotification')
+            msg_data = RxMsgAttHandleValueNotification(hci_msg_rx.data, self.exp_value_len_resp)
 
             if msg_data.status == STATUS_SUCCESS:
-                block_size = msg_data.value[1:3]  # TODO: handle magic number
+                if self.ctrl_command == self.OAD_EXT_CTRL_GET_BLK_SZ:
+                    mtu_size = int.from_bytes(msg_data.value[1:3], byteorder='little', signed=False)
+                    print('block size = ', mtu_size)
+                    self.fsm.firmware.set_mtu_size(mtu_size)
                 self.control_ack_getlist.remove(msg_data.event)
                 valid_resp = True
             else:
@@ -270,11 +277,14 @@ class StateOadSetControl(State):
             # once metadata set, start writing OAD blocks
             elif self.ctrl_command == self.OAD_EXT_CTRL_START_OAD:
                 self.fsm.transit(StateOadWriteBlock)
+            # once new image enabled, OAD is done
+                self.fsm.transit(StateOadIdle)
 
 
 class StateOadSetMeta(State):
     SET_META_REQ_BYTE_LEN = 0x1C
     IDENTIFY_VALUE_HANDLE = 0x000B
+    IMG_IDENTIFY_OFFSET = 0x0000
 
     def __init__(self, fsm):
         super().__init__(fsm)
@@ -286,20 +296,23 @@ class StateOadSetMeta(State):
         self._set_identify()
 
     def _set_identify(self):
+        print('set meta data identify')
+        meta_data = self.fsm.firmware.get_metadata_value()
         tx_msg = TxPackWriteLongCharValue(Type.LinkCtrlCommand,
                                           OpCode.GATT_WriteLongCharValue,
                                           self.SET_META_REQ_BYTE_LEN,
                                           self.fsm.conn_handle,
                                           self.IDENTIFY_VALUE_HANDLE,
-                                          0x0000,
-                                          0)  # TODO: fill value
+                                          self.IMG_IDENTIFY_OFFSET,
+                                          meta_data)
         self.fsm.npi.send_binary_data(tx_msg.buf_str)
 
     def on_event(self, hci_msg_rx):
         valid_resp = False
 
         if hci_msg_rx.get_event() == Event.GAP_HCI_ExtentionCommandStatus:
-            msg_data = RxMsgGapHciExtentionCommandStatus(hci_msg_rx.msg_data)
+            print('receive GAP_HCI_ExtentionCommandStatus in SET_META')
+            msg_data = RxMsgGapHciExtentionCommandStatus(hci_msg_rx.data)
 
             if msg_data.status == STATUS_SUCCESS:
                 self.meta_ack_getlist.remove(msg_data.event)
@@ -308,7 +321,8 @@ class StateOadSetMeta(State):
                 self.handle_error()
 
         elif hci_msg_rx.get_event() == Event.ATT_ExecuteWriteRsp:
-            msg_data = RxMsgAttExecuteWriteRsp(hci_msg_rx.msg_data)
+            print('receive ATT_ExecuteWriteRsp in SET_META')
+            msg_data = RxMsgAttExecuteWriteRsp(hci_msg_rx.data)
 
             if msg_data.status == STATUS_SUCCESS:
                 self.meta_ack_getlist.remove(msg_data.event)
@@ -317,7 +331,8 @@ class StateOadSetMeta(State):
                 self.handle_error()
 
         elif hci_msg_rx.get_event() == Event.ATT_HandleValueNotification:
-            msg_data = RxMsgAttHandleValueNotification(hci_msg_rx.msg_data, 1)
+            print('receive ATT_HandleValueNotification in SET_META')
+            msg_data = RxMsgAttHandleValueNotification(hci_msg_rx.data, 1)
 
             if msg_data.status == STATUS_SUCCESS:
                 self.meta_ack_getlist.remove(msg_data.event)
@@ -330,12 +345,60 @@ class StateOadSetMeta(State):
 
 
 class StateOadWriteBlock(State):
+    BLOCK_NUM_FIELD_BYTE_LEN = 0x04
+    WRITE_BLOCK_HANDLE = 0x000F # TODO: dynamic
+
+
     def __init__(self, fsm):
         super().__init__(fsm)
         self.blocks_written = 0
+        self.ack_write_getlist = [
+            Event.GAP_HCI_ExtentionCommandStatus,
+            Event.ATT_HandleValueNotification
+        ]
+        self.write_block()
 
-    def on_event(self, msg):
+    def write_block(self):
+        tx_msg = TxPackWriteNoRsp(Type.LinkCtrlCommand,
+                                  OpCode.GATT_WriteNoRsp,
+                                  self.BLOCK_NUM_FIELD_BYTE_LEN + mtu_size,
+                                  self.fsm.conn_handle,
+                                  self.WRITE_BLOCK_HANDLE,
+                                  bytearray(self.fsm.firmware.get_next_block()))
+        self.fsm.npi.send_binary_data(tx_msg.buf_str)
+        self.blocks_written += 1
+
+    def retry_write_bloc(self):
+        # TODO: to define later
         pass
+
+
+    def on_event(self, hci_msg_rx):
+        valid_resp = False
+        if hci_msg_rx.get_event() == Event.GAP_HCI_ExtentionCommandStatus:
+            msg_data = RxMsgGapHciExtentionCommandStatus(hci_msg_rx.data)
+
+            if msg_data.status == STATUS_SUCCESS:
+                self.ack_write_getlist.remove(msg_data.event)
+                valid_resp = True
+            else:
+                self.handle_error()
+
+        elif hci_msg_rx.get_event() == Event.ATT_HandleValueNotification:
+            msg_data = RxMsgAttHandleValueNotification(hci_msg_rx.data, 0x06)
+
+            if msg_data.status == STATUS_SUCCESS:
+                self.ack_write_getlist.remove(msg_data.event)
+                valid_resp = True
+            else:
+                self.handle_error()
+
+        if valid_resp and not len(self.ack_write_getlist):
+            if not self.fsm.firmware.is_read_complete():
+                self.write_block()
+            # switch to next state
+            else:
+                self.fsm.transit(StateOadSetControl, StateOadSetControl.OAD_EXT_CTRL_ENABLED_IMG)
 
 
 class OadFsm:
@@ -345,7 +408,7 @@ class OadFsm:
         self.state = StateOadIdle(self)
         self.conn_handle = conn_handle
         self.npi = npi_manager
-        self.firmware = FirmwareBin('oad.bin')
+        self.firmware = FirmwareBin('app/npi/oad.bin')
 
     def on_event(self, hci_msg):
         self.state.on_event(hci_msg)

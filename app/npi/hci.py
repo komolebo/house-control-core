@@ -45,13 +45,14 @@ class TxPackBase:
         self.buf_str = None
 
     def as_binary(self):
+        print("Dump TX: ", self.buf_str)
         return self.buf_str
 
 
 # ------------------------------------------------------------------------
 # Write char value handlers
 class TxPackWriteCharValue(TxPackBase):
-    pattern = '@BHBHHH'
+    pattern = '<BHBHHH'
 
     def __init__(self, type, op_code, len, conn_handle, handle, value):
         super().__init__()
@@ -65,7 +66,7 @@ class TxPackWriteCharValue(TxPackBase):
 
 
 class RxMsgAttWriteRsp:
-    pattern = '@HBHB'
+    pattern = '<HBHB'
 
     def __init__(self, data_bytes):
         fields = struct.unpack(self.pattern, data_bytes)
@@ -78,11 +79,12 @@ class RxMsgAttWriteRsp:
 # ------------------------------------------------------------------------
 # Write no response
 class TxPackWriteNoRsp(TxPackBase):
-    pattern = '@BHBHHB'
+    HANDLES_BYTE_LEN = 0x04
 
     def __init__(self, type, op_code, data_length, conn_handle, handle, value):
+        pattern = '<BHBHH{0}s'.format(data_length - self.HANDLES_BYTE_LEN)
         super().__init__()
-        self.buf_str = struct.pack(self.pattern,
+        self.buf_str = struct.pack(pattern,
                                    type,
                                    op_code,
                                    data_length,
@@ -94,11 +96,10 @@ class TxPackWriteNoRsp(TxPackBase):
 # ------------------------------------------------------------------------
 # Write no response
 class TxPackWriteLongCharValue(TxPackBase):
-    pattern = '@BHBHHB'
-
     def __init__(self, type, op_code, data_length, conn_handle, handle, offset, value):
         super().__init__()
-        self.buf_str = struct.pack(self.pattern,
+        pattern = '<BHBHHH{0}s'.format(len(value))
+        self.buf_str = struct.pack(pattern,
                                    type,
                                    op_code,
                                    data_length,
@@ -109,7 +110,7 @@ class TxPackWriteLongCharValue(TxPackBase):
 
 
 class RxMsgAttExecuteWriteRsp:
-    pattern = '@BHBHBHB'
+    pattern = '<HBHB'
 
     def __init__(self, data_bytes):
         fields = struct.unpack(self.pattern, data_bytes)
@@ -121,7 +122,7 @@ class RxMsgAttExecuteWriteRsp:
 # ------------------------------------------------------------------------
 # MTU exchange handlers
 class TxPackAttExchangeMtuReq(TxPackBase):
-    pattern = '@BHBHBHH'
+    pattern = '<BHBHH'
 
     def __init__(self, type, op_code, data_length, conn_handle, client_rx_mtu):
         super().__init__()
@@ -134,7 +135,7 @@ class TxPackAttExchangeMtuReq(TxPackBase):
 
 
 class RxMsgAttExchangeMtuRsp:
-    pattern = '@HBHBH'
+    pattern = '<HBHBH'
 
     def __init__(self, data_bytes):
         fields = struct.unpack(self.pattern, data_bytes)
@@ -160,11 +161,9 @@ class RxMsgAttMtuUpdatedEvt:
 # ------------------------------------------------------------------------
 # Handle value notification responses
 class RxMsgAttHandleValueNotification:
-    header_pattern = '@HBHBH'
-
     def __init__(self, data_bytes, exp_val_len):
-        self.pattern = '{0}{1}s'.format(self.header_pattern, exp_val_len)
-        fields = struct.unpack(self.pattern, data_bytes)
+        pattern = '<HBHBH{0}s'.format(exp_val_len)
+        fields = struct.unpack(pattern, data_bytes)
         (self.event,
          self.status,
          self.conn_handle,
@@ -176,7 +175,7 @@ class RxMsgAttHandleValueNotification:
 # ------------------------------------------------------------------------
 # Rest HCI handlers
 class RxMsgGapHciExtentionCommandStatus:
-    pattern = '@HBHB'
+    pattern = '<HBHB'
 
     def __init__(self, data_bytes):
         fields = struct.unpack(self.pattern, data_bytes)
