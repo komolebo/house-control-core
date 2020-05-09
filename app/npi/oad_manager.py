@@ -8,7 +8,7 @@ if __name__ == '__main__':
 
     oadFsm.start()
 
-    while 1:
+    while True:
         npi_msg = npi.process_next_msg()
         print("DUMP RX: ", npi_msg.as_output())
         oadFsm.on_event(npi_msg)
