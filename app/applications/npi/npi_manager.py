@@ -7,7 +7,7 @@ from app.middleware.threads import AppThread
 
 
 class NpiManager:
-    def __init__(self, tty_port):
+    def __init__(self, tty_port='/dev/ttyUSB1'):
         self.ser = serial.Serial(
             port=tty_port,
             baudrate=115200,
@@ -45,7 +45,7 @@ class NpiManager:
 class NpiApp(AppThread):
     def __init__(self, mbox):
         super().__init__(mbox)
-        self.npi = NpiManager('/dev/ttyUSB0')
+        self.npi = NpiManager('/dev/ttyUSB1')
 
     def on_message(self, msg, data):
         if msg is Messages.NPI_SERIAL_PORT_LISTEN:

@@ -24,5 +24,5 @@ class Messages(AbstractNamedEnumsInClass):
     OAD_COMPLETE = create_id()
 
     SCAN_DEVICE_REQ = create_id()
+    SCAN_DEVICE_ABORT = create_id()
     SCAN_DEVICE_RESP = create_id()
-

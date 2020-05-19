@@ -37,6 +37,7 @@ class Subscriptions:
             MBox.DEV
         ],
 
+# OAD section
         Messages.OAD_START: [
             MBox.DEV
         ],
@@ -44,8 +45,19 @@ class Subscriptions:
             MBox.DEV
         ],
         Messages.OAD_COMPLETE: [
+            # TODO: front
+        ],
+
+# Scan section
+        Messages.SCAN_DEVICE_REQ: [
             MBox.DEV
-        ]
+        ],
+        Messages.SCAN_DEVICE_ABORT: [
+            MBox.DEV
+        ],
+        Messages.SCAN_DEVICE_RESP: [
+            # TODO: front
+        ],
     }
 
 
@@ -60,7 +72,10 @@ class Validation:
         Messages.NPI_RX_MSG: ["data"],
         Messages.OAD_START: [],
         Messages.OAD_ABORT: [],
-        Messages.OAD_COMPLETE: []
+        Messages.OAD_COMPLETE: [],
+        Messages.SCAN_DEVICE_REQ: [],
+        Messages.SCAN_DEVICE_ABORT: [],
+        Messages.SCAN_DEVICE_RESP: ["data"]
     }
 
     @classmethod

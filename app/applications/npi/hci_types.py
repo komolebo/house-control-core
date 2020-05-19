@@ -3,6 +3,14 @@ import struct
 STATUS_SUCCESS = 0
 
 
+class Constants:
+    GAP_ADTYPE_FLAGS = 0x01
+    GAP_ADTYPE_16BIT_MORE = 0x02
+    GAP_ADTYPE_LOCAL_NAME_COMPLETE = 0x09
+    OAD_SERVICE_UUID = 0xFFC0
+    OAD_RESET_SERVICE_UUID = 0xFFD0
+
+
 class Type:
     LinkCtrlCommand = 0x01
     HciPolicyCommand = 0x02
@@ -17,6 +25,7 @@ class EventCode:
 
 class OpCode:
     # transmit codes
+    GapScan_enable = 0xFE51
     HCI_LEReadRemoteUsedFeatures = 0x2016
     GATT_DiscPrimaryServiceByUUID = 0xFD86
     ATT_FindByTypeValueReq = 0x06
@@ -28,9 +37,16 @@ class OpCode:
     GATT_WriteLongCharValue = 0xFD96
 
 
+class EventId:
+    GAP_EVT_SCAN_ENABLED = 0x00010000
+    GAP_EVT_SCAN_DISABLED = 0x00020000
+    GAP_EVT_ADV_REPORT = 0x00400000
+
+
 class Event:
     # receive codes
     GAP_HCI_ExtentionCommandStatus = 0x067F
+    GAP_AdvertiserScannerEvent = 0x0613
     ATT_ErrorRsp = 0x0501
     ATT_FindByTypeValueRsp = 0x0507
     ATT_FindInfoRsp = 0x0505
@@ -87,6 +103,66 @@ class HciPackageRx:
         if not self.len:
             return False
         return True
+
+
+# ------------------------------------------------------------------------
+# Gap scan
+class TxPackGapScan(TxPackBase):
+    pattern = '<BHBHHH'
+    DATA_LEN = 6
+
+    def __init__(self, type, op_code, period, duration, max_num_records):
+        super().__init__()
+        data_length = self.DATA_LEN
+        self.buf_str = struct.pack(self.pattern,
+                                   type,
+                                   op_code,
+                                   data_length,
+                                   period,
+                                   duration,
+                                   max_num_records)
+
+
+class RxMsgGapAdvertiserScannerEvent:
+    SCAN_ENABLED_MSG_LEN = 0x07
+    SCAN_DISABLED_MSG_LEN = 0x09
+
+    def __init__(self, data_bytes):
+        if len(data_bytes) == self.SCAN_ENABLED_MSG_LEN:
+            pattern = '<HBI'
+            fields = struct.unpack(pattern, data_bytes)
+            (self.event,
+             self.status,
+             self.event_id) = fields
+        elif len(data_bytes) == self.SCAN_DISABLED_MSG_LEN:
+            pattern = '<HBIBB'
+            fields = struct.unpack(pattern, data_bytes)
+            (self.event,
+             self.status,
+             self.event_id,
+             self.end_reason,
+             self.number_of_reports) = fields
+        else:
+            # TODO: remove magic number
+            data_len = len(data_bytes) - self.SCAN_ENABLED_MSG_LEN - 24
+            pattern = '<HBIBB6sBBBBBB6sHH{0}s'.format(data_len)
+            fields = struct.unpack(pattern, data_bytes)
+            (self.event,
+             self.status,
+             self.event_id,
+             self.adv_rpt_event_type,
+             self.address_type,
+             self.address,
+             self.primary_phy,
+             self.secondary_phy,
+             self.adv_sid,
+             self.tx_power,
+             self.rssi,
+             self.direct_addr_type,
+             self.direct_addr,
+             self.periodic_adv_int,
+             self.data_length,
+             self.data) = fields
 
 
 # ------------------------------------------------------------------------
