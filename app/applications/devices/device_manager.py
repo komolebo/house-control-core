@@ -8,9 +8,12 @@ from app.middleware.threads import AppThread
 
 class DeviceManager(OadManager):
     def __init__(self):
-        npi = NpiManager('/dev/ttyUSB0')
-        data_sender = lambda data: npi.send_binary_data(data)
+        self.npi = NpiManager('/dev/ttyUSB0')
+        data_sender = lambda data: self.npi.send_binary_data(data)
         super().__init__(data_sender)
+
+    def scan_devices(self):
+        pass
 
     def process_npi_msg(self, npi_msg):
         if self.oad_active:
@@ -18,20 +21,17 @@ class DeviceManager(OadManager):
 
 
 class DeviceApp(AppThread, DeviceManager):
+    def __init__(self, mbox):
+        AppThread.__init__(self, mbox)
+        DeviceManager.__init__(self)
+
     def on_message(self, msg, data):
         if msg is Messages.NPI_RX_MSG:
+            print('Received NPI msg')
             self.process_npi_msg(data["data"])
         elif msg is Messages.OAD_START:
             self.start_oad()
         elif msg is Messages.OAD_ABORT:
             self.abort_oad()
-# if __name__ == '__main__':
-#     npi = NpiManager('/dev/ttyUSB0')
-#     oadFsm = OadFsm()
-#
-#     oadFsm.start()
-#
-#     while True:
-#         npi_msg = npi.process_next_msg()
-#         print("DUMP RX: ", npi_msg.as_output())
-#         oadFsm.on_event(npi_msg)
+        elif msg is Messages.SCAN_DEVICE_REQ:
+            self.scan_devices()

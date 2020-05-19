@@ -153,6 +153,8 @@ class StateOadNotifyEnable(State):
             msg_data = RxMsgAttWriteRsp(hci_msg_rx.data)
             valid_resp = self.handle_ack(msg_data)
 
+        print("MDBG: self.ack_list: {0}, valid: {1}".format(self.ack_list, valid_resp))
+
         # all notifications are enabled, transit to next state
         if valid_resp and self.ack_received():
             self.post_handler()
@@ -428,7 +430,7 @@ class StatePostOad(State):
 class OadFsm:
     def __init__(self, data_sender, complete_cb):
         self.state = StateOadIdle(self)
-        self.firmware = FirmwareBin('app/npi/oad.bin')
+        self.firmware = FirmwareBin('app/applications/devices/oad/oad.bin')
         self.data_sender = data_sender
         self.process_complete_cb = complete_cb
 

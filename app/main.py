@@ -19,7 +19,7 @@ def main():
     threads = []
 
     print("starting the threads ", THREAD_CFG)
-    for (enabled, app_thread, ) in THREAD_CFG:
+    for (enabled, app_thread) in THREAD_CFG:
         if enabled:
             mbox = Dispatcher.create_mbox()
             t = app_thread(mbox)
@@ -27,4 +27,5 @@ def main():
             t.start()
             threads.append(t)
 
-    Dispatcher.send_msg(Messages.TEST_MSG, {"message": "test msg"})
+        Dispatcher.send_msg(Messages.TEST_MSG, {"message": "test msg"})
+        Dispatcher.send_msg(Messages.NPI_SERIAL_PORT_LISTEN, {})

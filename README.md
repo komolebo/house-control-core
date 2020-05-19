@@ -12,3 +12,6 @@ python manage.py migrate app
 python manage.py createsuperuser
 
 pip install djangorestframework django-cors-headers
+
+sudo chmod 666 /dev/ttyUSB0
+

@@ -42,6 +42,9 @@ class Subscriptions:
         ],
         Messages.OAD_ABORT: [
             MBox.DEV
+        ],
+        Messages.OAD_COMPLETE: [
+            MBox.DEV
         ]
     }
 
@@ -56,7 +59,8 @@ class Validation:
         Messages.NPI_SERIAL_PORT_LISTEN: [],
         Messages.NPI_RX_MSG: ["data"],
         Messages.OAD_START: [],
-        Messages.OAD_ABORT: []
+        Messages.OAD_ABORT: [],
+        Messages.OAD_COMPLETE: []
     }
 
     @classmethod
