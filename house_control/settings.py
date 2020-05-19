@@ -137,6 +137,7 @@ STATIC_URL = '/static/'
 # Enable/disable threads
 THREAD__WIFI_MNGR = True
 THREAD__RF_MNGR = True
-THREAD__DEV_MNGR = True
+THREAD__DEV_APP = True
+THREAD__NPI_APP = True
 
 CHANNEL_GROUP_NAME = 'base'

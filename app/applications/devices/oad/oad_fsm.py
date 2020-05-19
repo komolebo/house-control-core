@@ -1,6 +1,6 @@
 from threading import Timer
-from app.npi.firmware import FirmwareBin
-from app.npi.hci import OpCode, Type, Event, RxMsgGapHciExtentionCommandStatus, \
+from app.applications.devices.oad.firmware import FirmwareBin
+from app.applications.npi.hci_types import OpCode, Type, Event, RxMsgGapHciExtentionCommandStatus, \
     STATUS_SUCCESS, RxMsgAttWriteRsp, TxPackWriteCharValue, TxPackAttExchangeMtuReq, RxMsgAttExchangeMtuRsp, \
     RxMsgAttMtuUpdatedEvt, RxMsgAttHandleValueNotification, TxPackWriteNoRsp, TxPackWriteLongCharValue, \
     RxMsgAttExecuteWriteRsp, RxMsgGapTerminateLink
@@ -136,7 +136,7 @@ class StateOadNotifyEnable(State):
                                       OadSettings.CONN_HANDLE,
                                       config_handle,
                                       OadSettings.CFG_ENABLE_VALUE)
-        self.fsm.npi.send_binary_data(tx_msg.buf_str)
+        self.fsm.data_sender(tx_msg.buf_str)
 
     def on_event(self, hci_msg_rx):
         print('receive event in StateOadNotifyEnable')
@@ -189,7 +189,7 @@ class StateOadExchangeMtu(State):
                                          self.EXCHANGE_MTU_REQ_BYTE_LEN,
                                          OadSettings.CONN_HANDLE,
                                          OadSettings.SERVER_RX_MTU_SIZE)
-        self.fsm.npi.send_binary_data(tx_msg.buf_str)
+        self.fsm.data_sender(tx_msg.buf_str)
 
     def on_event(self, hci_msg_rx):
         valid_resp = False
@@ -252,7 +252,7 @@ class StateOadSetControl(State):
                                   OadSettings.CONN_HANDLE,
                                   OadSettings.CONTROL_VALUE_HANDLE,
                                   value_arr)
-        self.fsm.npi.send_binary_data(tx_msg.buf_str)
+        self.fsm.data_sender(tx_msg.buf_str)
 
     def on_event(self, hci_msg_rx):
         valid_resp = False
@@ -316,7 +316,7 @@ class StateOadSetMeta(State):
                                           OadSettings.IDENTIFY_VALUE_HANDLE,
                                           self.IMG_IDENTIFY_OFFSET,
                                           meta_data)
-        self.fsm.npi.send_binary_data(tx_msg.buf_str)
+        self.fsm.data_sender(tx_msg.buf_str)
 
     def on_event(self, hci_msg_rx):
         valid_resp = False
@@ -368,7 +368,7 @@ class StateOadWriteBlock(State):
                                   OadSettings.CONN_HANDLE,
                                   OadSettings.WRITE_BLOCK_HANDLE,
                                   bytearray(block))
-        self.fsm.npi.send_binary_data(tx_msg.buf_str)
+        self.fsm.data_sender(tx_msg.buf_str)
 
     def on_event(self, hci_msg_rx):
         valid_resp = False
@@ -418,6 +418,7 @@ class StatePostOad(State):
 
     def post_handler(self):
         self.fsm.transit(StateOadIdle)
+        self.fsm.process_complete_cb()
 
     def timeout(self):
         # post here an event of OAD failure
@@ -425,10 +426,11 @@ class StatePostOad(State):
 
 
 class OadFsm:
-    def __init__(self, npi_manager):
+    def __init__(self, data_sender, complete_cb):
         self.state = StateOadIdle(self)
-        self.npi = npi_manager
         self.firmware = FirmwareBin('app/npi/oad.bin')
+        self.data_sender = data_sender
+        self.process_complete_cb = complete_cb
 
     def on_event(self, hci_msg):
         self.state.on_event(hci_msg)

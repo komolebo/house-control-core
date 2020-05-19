@@ -54,6 +54,41 @@ class TxPackBase:
         return self.buf_str
 
 
+
+class HciPackageRx:
+    HCI_RX_EVENT_BYTE_LEN = 0x02
+
+    def __init__(self, type, code, len, data):
+        self.type = type
+        self.code = code
+        self.len = len
+        self.data = data
+
+    def get_event(self):
+        if self.data:
+            event = self.data[0:self.HCI_RX_EVENT_BYTE_LEN]
+            return int.from_bytes(event, byteorder='little', signed=False)
+        return None
+
+    def as_output(self):
+        str = ""
+        str += hex(self.type)
+        str += ' '
+        str += hex(self.code)
+        str += ' '
+        str += hex(self.len)
+        str += ' '
+        for ch in self.data:
+            str += hex(ch)
+            str += ' '
+        return str
+
+    def is_valid(self):
+        if not self.len:
+            return False
+        return True
+
+
 # ------------------------------------------------------------------------
 # Write char value handlers
 class TxPackWriteCharValue(TxPackBase):

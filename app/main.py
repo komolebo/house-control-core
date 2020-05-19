@@ -1,15 +1,17 @@
+from app.applications.devices.device_manager import DeviceApp
 from app.applications.devices.devices import DevManager
-from app.middleware.dispatcher import Dispatcher, MBox
+from app.applications.npi.npi_manager import NpiApp
+from app.middleware.dispatcher import Dispatcher
 from app.middleware.messages import Messages
 from app.applications.rf.rf_manager import RfManager
 from app.applications.wifi.wifi_manager import WifiManager
-from house_control.settings import THREAD__WIFI_MNGR, THREAD__RF_MNGR, THREAD__DEV_MNGR
-
+from house_control.settings import THREAD__WIFI_MNGR, THREAD__RF_MNGR, THREAD__DEV_APP, THREAD__NPI_APP
 
 THREAD_CFG = [
-    (THREAD__WIFI_MNGR, WifiManager, MBox.WIFI),
-    (THREAD__RF_MNGR, RfManager, MBox.RF),
-    (THREAD__DEV_MNGR, DevManager, MBox.DEV_HANDLER),
+    (THREAD__WIFI_MNGR, WifiManager),
+    (THREAD__RF_MNGR, RfManager),
+    (THREAD__DEV_APP, DeviceApp),
+    (THREAD__NPI_APP, NpiApp)
 ]
 
 
@@ -17,9 +19,9 @@ def main():
     threads = []
 
     print("starting the threads ", THREAD_CFG)
-    for (enabled, app_thread, mbox_id) in THREAD_CFG:
+    for (enabled, app_thread, ) in THREAD_CFG:
         if enabled:
-            mbox = Dispatcher.create_mbox(mbox_id)
+            mbox = Dispatcher.create_mbox()
             t = app_thread(mbox)
             t.setDaemon(True)
             t.start()

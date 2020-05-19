@@ -18,15 +18,30 @@ class Subscriptions:
         ],
 
         Messages.SENSOR_REMOVED_FROM_FRONT: [
-            MBox.DEV_HANDLER
+            MBox.DEV
         ],
 
         Messages.DEVICE_LOST_COMM: [
-            MBox.DEV_HANDLER
+            MBox.DEV
         ],
 
         Messages.CLEAR_DEVICE_LOST_COMM: [
-            MBox.DEV_HANDLER
+            MBox.DEV
+        ],
+
+        Messages.NPI_SERIAL_PORT_LISTEN: [
+            MBox.NPI
+        ],
+
+        Messages.NPI_RX_MSG: [
+            MBox.DEV
+        ],
+
+        Messages.OAD_START: [
+            MBox.DEV
+        ],
+        Messages.OAD_ABORT: [
+            MBox.DEV
         ]
     }
 
@@ -37,7 +52,11 @@ class Validation:
         Messages.TEST_MSG2: ['id'],
         Messages.SENSOR_REMOVED_FROM_FRONT: ['id'],
         Messages.DEVICE_LOST_COMM: ["id"],
-        Messages.CLEAR_DEVICE_LOST_COMM: ["id"]
+        Messages.CLEAR_DEVICE_LOST_COMM: ["id"],
+        Messages.NPI_SERIAL_PORT_LISTEN: [],
+        Messages.NPI_RX_MSG: ["data"],
+        Messages.OAD_START: [],
+        Messages.OAD_ABORT: []
     }
 
     @classmethod
@@ -51,11 +70,14 @@ class Validation:
 
 class Dispatcher:
     mbox_table = {}
+    mbox_num = 0
 
     @classmethod
-    def create_mbox(cls, mbox):
-        cls.mbox_table[mbox] = Queue()
-        return cls.mbox_table[mbox]
+    def create_mbox(cls):
+        mbox_id = cls.mbox_num
+        cls.mbox_num += 1
+        cls.mbox_table[mbox_id] = Queue()
+        return cls.mbox_table[mbox_id]
 
     @classmethod
     def __put_msg_in_mbox(cls, mbox_id, data):

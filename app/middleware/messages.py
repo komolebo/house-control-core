@@ -15,3 +15,10 @@ class Messages(AbstractNamedEnumsInClass):
     SENSOR_REMOVED_FROM_FRONT = create_id()
     DEVICE_LOST_COMM = create_id()
     CLEAR_DEVICE_LOST_COMM = create_id()
+
+    NPI_SERIAL_PORT_LISTEN = create_id()
+    NPI_RX_MSG = create_id()
+
+    OAD_START = create_id()
+    OAD_ABORT = create_id()
+
