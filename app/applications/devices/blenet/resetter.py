@@ -34,4 +34,4 @@ class ResetHandler(BaseHciHandler):
             msg_data = RxMsgGapHciExtResetSystemCmdDone(hci_msg_rx.data)
             if msg_data.status == STATUS_SUCCESS:
                 self.complete(msg=Messages.CENTRAL_RESET_RESP,
-                              data={"success" : STATUS_SUCCESS})
+                              data={"status" : STATUS_SUCCESS})

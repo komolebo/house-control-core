@@ -39,3 +39,6 @@ class Messages(AbstractNamedEnumsInClass):
     ESTABLISH_CONN = create_id()
     ESTABLISH_CONN_ABORT = create_id()
     ESTABLISH_CONN_RESP = create_id()
+
+    TERMINATE_CONN = create_id()
+    TERMINATE_CONN_RESP = create_id()

@@ -1,19 +1,17 @@
-from time import sleep
-
+from app.applications.devices.blenet.ack_handler import HciAckHandler
 from app.applications.devices.hci_manager import BaseHciHandler
 from app.applications.npi.hci_types import Event, Type, OpCode, Constants, TxPackGapDeviceInit, \
-    RxMsgGapHciExtentionCommandStatus, STATUS_SUCCESS, RxMsgGapDeviceInitDone
+    STATUS_SUCCESS, RxMsgGapDeviceInitDone
 from app.middleware.messages import Messages
 
 
-class InitiatorHandler(BaseHciHandler):
+class InitiatorHandler(BaseHciHandler, HciAckHandler):
     def __init__(self, data_sender, complete_cb):
         self.ext_complete_cb = complete_cb
         self.data_sender = data_sender
-        self.ack_list = [
+        HciAckHandler.__init__(self, [
             Event.GAP_HCI_ExtentionCommandStatus,
-            Event.GAP_DeviceInitDone
-        ]
+        ])
         self.central_ip = None
 
     def start(self):
@@ -31,26 +29,14 @@ class InitiatorHandler(BaseHciHandler):
         pass
 
     def process_incoming_npi_msg(self, hci_msg_rx):
-        # Assume scan request is sent, collect response
-        valid_resp = False
+        self.handle_ack(hci_msg_rx)
 
+        if self.ack_received():
         # if not all ACK received
-        if len(self.ack_list):
-            if hci_msg_rx.get_event() == Event.GAP_HCI_ExtentionCommandStatus:
-                msg_data = RxMsgGapHciExtentionCommandStatus(hci_msg_rx.data)
-                if msg_data.status == STATUS_SUCCESS:
-                    self.ack_list.remove(msg_data.event)
-                    valid_resp = True
-
-            elif hci_msg_rx.get_event() == Event.GAP_DeviceInitDone:
+            if hci_msg_rx.get_event() == Event.GAP_DeviceInitDone:
                 msg_data = RxMsgGapDeviceInitDone(hci_msg_rx.data)
                 if msg_data.status == STATUS_SUCCESS:
-                    self.ack_list.remove(msg_data.event)
                     self.central_ip = msg_data.dev_addr
-                    valid_resp = True
-
-        # ACK received and current response is not a previous ACK
-        if valid_resp and not len(self.ack_list):
-            self.complete(msg=Messages.CENTRAL_INIT_RESP,
-                          data={"central_ip": self.central_ip,
-                                "success": STATUS_SUCCESS})
+                    self.complete(msg=Messages.CENTRAL_INIT_RESP,
+                                  data={"central_ip": self.central_ip,
+                                        "status": STATUS_SUCCESS})

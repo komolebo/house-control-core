@@ -13,7 +13,7 @@ class WifiManager(AppThread):
 
         count = 0
         while True:
-            sleep(3)
+            sleep(6)
             print("awakened")
             send_notification_to_front(Notifications.SENSOR_LIST_CHANGED, {1: "1", 2: "2"})
 
@@ -23,11 +23,12 @@ class WifiManager(AppThread):
             if count == 2:
                 Dispatcher.send_msg(Messages.SCAN_DEVICE, {})
 
-            # if count == 1:
-            #     print ('CONN START')
-            #     Dispatcher.send_msg(Messages.ESTABLISH_CONN, {'data':
-            #                                                    [0xD1, 0x35, 0xDA, 0xF2, 0xF8, 0xF0]})
+            if count == 4:
+                Dispatcher.send_msg(Messages.ESTABLISH_CONN, {'data':
+                                                               [0xD1, 0x35, 0xDA, 0xF2, 0xF8, 0xF0]})
 
+            if count == 6:
+                Dispatcher.send_msg(Messages.TERMINATE_CONN, {"conn_handle": 0})
             # if count == 2:
             #     print ('OAD START')
             #     Dispatcher.send_msg(Messages.OAD_START, {})

@@ -1,3 +1,4 @@
+from app.applications.devices.blenet.ack_handler import HciAckHandler
 from app.applications.devices.hci_manager import BaseHciHandler
 from app.applications.npi.hci_types import TxPackGapScan, Type, OpCode, Event, RxMsgGapHciExtentionCommandStatus, \
     STATUS_SUCCESS, RxMsgGapAdvertiserScannerEvent, EventId, Constants
@@ -56,14 +57,13 @@ class ScanFilter:
         return True
 
 
-class ScanHandler(BaseHciHandler):
+class ScanHandler(BaseHciHandler, HciAckHandler):
     def __init__(self, data_sender, complete_cb):
         self.data_sender = data_sender
         self.ext_complete_cb = complete_cb
-        self.ack_list = [
+        HciAckHandler.__init__(self, [
             Event.GAP_HCI_ExtentionCommandStatus, # HCI ASK
-            Event.GAP_AdvertiserScannerEvent # Scan enabled
-        ]
+        ])
         self.scan_list = []
 
     def start(self):
@@ -101,21 +101,14 @@ class ScanHandler(BaseHciHandler):
 
     def process_incoming_npi_msg(self, hci_msg_rx):
         # Assume scan request is sent, collect response
-        valid_resp = False
+        valid_resp = self.handle_ack(hci_msg_rx)
 
+        if self.ack_received():
         # if not all ACK received
-        if len(self.ack_list):
-            if hci_msg_rx.get_event() == Event.GAP_HCI_ExtentionCommandStatus:
-                msg_data = RxMsgGapHciExtentionCommandStatus(hci_msg_rx.data)
-                if msg_data.status == STATUS_SUCCESS:
-                    self.ack_list.remove(msg_data.event)
-                    valid_resp = True
-
-            elif hci_msg_rx.get_event() == Event.GAP_AdvertiserScannerEvent:
+            if hci_msg_rx.get_event() == Event.GAP_AdvertiserScannerEvent:
                 msg_data = RxMsgGapAdvertiserScannerEvent(hci_msg_rx.data)
                 if msg_data.status == STATUS_SUCCESS:
                     if msg_data.event_id == EventId.GAP_EVT_ADV_REPORT:
-                        self.ack_list.remove(msg_data.event)
                         valid_resp = True
 
         # ACK received and current response is not a previous ACK
@@ -128,4 +121,4 @@ class ScanHandler(BaseHciHandler):
                 #        "{0} != {1}".format(len(self.scan_list), scan_report_msg_data.number_of_reports))
                 self.complete(msg=Messages.SCAN_DEVICE_RESP,
                               data={"data": self.scan_list,
-                                    "success": STATUS_SUCCESS})
+                                    "status": STATUS_SUCCESS})

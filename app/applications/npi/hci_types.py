@@ -23,6 +23,7 @@ class Constants:
     PROFILE_ROLE_CENTRAL = 0x08
     ADDRMODE_PUBLIC = 0x00
 
+    REMOTE_USER_TERMINATED = 0x13
 
 
 class Type:
@@ -53,6 +54,7 @@ class OpCode:
     ATT_ExchangeMTUReq = 0xFD02
     GATT_WriteNoRsp = 0xFDB6
     GATT_WriteLongCharValue = 0xFD96
+    GAP_TerminateLinkRequest = 0xFE0A
 
 
 class EventId:
@@ -418,6 +420,31 @@ class RxMsgAttHandleValueNotification:
 
 
 # ------------------------------------------------------------------------
+# Terminate connection
+class TxPackGapTerminateLink(TxPackBase):
+    pattern = '<BHBHB'
+
+    def __init__(self, type, op_code, conn_handle, disc_reason):
+        super().__init__()
+        data_length = 3
+        self.buf_str = struct.pack(self.pattern,
+                                   type,
+                                   op_code,
+                                   data_length,
+                                   conn_handle,
+                                   disc_reason)
+
+class RxMsgGapTerminateLink:
+    pattern = '<HBHB'
+    def __init__(self, data_bytes):
+        fields = struct.unpack(self.pattern, data_bytes)
+        (self.event,
+         self.status,
+         self.conn_handle,
+         self.reason) = fields
+
+
+# ------------------------------------------------------------------------
 # Rest HCI handlers
 class RxMsgGapHciExtentionCommandStatus:
     short_pattern = '<HBHB'
@@ -436,12 +463,3 @@ class RxMsgGapHciExtentionCommandStatus:
              self.data_length,
              self.param_id,
              self.param_data) = struct.unpack(self.long_pattern, data_bytes)
-
-class RxMsgGapTerminateLink:
-    pattern = '<HBHB'
-    def __init__(self, data_bytes):
-        fields = struct.unpack(self.pattern, data_bytes)
-        (self.event,
-         self.status,
-         self.conn_handle,
-         self.reason) = fields

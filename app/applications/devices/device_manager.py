@@ -3,6 +3,7 @@ from app.applications.devices.blenet.establisher import EstablishHandler
 from app.applications.devices.blenet.initiator import InitiatorHandler
 from app.applications.devices.blenet.resetter import ResetHandler
 from app.applications.devices.blenet.scanner import ScanHandler
+from app.applications.devices.blenet.terminator import TerminateHandler
 from app.applications.devices.oad.oad_handler import OadHandler
 from app.applications.npi.npi_manager import NpiManager
 from app.middleware.dispatcher import Dispatcher
@@ -55,9 +56,9 @@ class DeviceApp(AppThread, DeviceManager):
             self.npi_interceptor.start()
 
 #------ Do here mutually exclusive procedures ----------------------------------------------
-        if msg is Messages.OAD_START:
+        elif msg is Messages.OAD_START:
             if self.npi_interceptor:
-                Dispatcher.send_msg(Messages.OAD_COMPLETE, {"success": RespCode.BUSY})
+                Dispatcher.send_msg(Messages.OAD_COMPLETE, {"status": RespCode.BUSY})
             else:
                 self.npi_interceptor = OadHandler(self.data_sender, self.send_response)
                 self.npi_interceptor.start()
@@ -66,7 +67,7 @@ class DeviceApp(AppThread, DeviceManager):
 
         elif msg is Messages.SCAN_DEVICE:
             if self.npi_interceptor:
-                Dispatcher.send_msg(Messages.SCAN_DEVICE_RESP, {"data" : 0, "success": RespCode.BUSY})
+                Dispatcher.send_msg(Messages.SCAN_DEVICE_RESP, {"data" : 0, "status": RespCode.BUSY})
             else:
                 self.npi_interceptor = ScanHandler(self.data_sender, self.send_response)
                 self.npi_interceptor.start()
@@ -75,11 +76,20 @@ class DeviceApp(AppThread, DeviceManager):
 
         elif msg is Messages.ESTABLISH_CONN:
             if self.npi_interceptor:
-                Dispatcher.send_msg(Messages.ESTABLISH_CONN_RESP, {"data": 0, "success": RespCode.BUSY})
+                Dispatcher.send_msg(Messages.ESTABLISH_CONN_RESP, {"data": 0, "status": RespCode.BUSY})
             else:
                 self.npi_interceptor = EstablishHandler(self.data_sender, self.send_response, data)
                 self.npi_interceptor.start()
         elif msg is Messages.ESTABLISH_CONN_ABORT:
             self.npi_interceptor.abort()
+
+        elif msg is Messages.TERMINATE_CONN:
+            if self.npi_interceptor:
+                Dispatcher.send_msg(Messages.TERMINATE_CONN_RESP, {"status": RespCode.BUSY})
+            else:
+                self.npi_interceptor = TerminateHandler(self.data_sender,
+                                                        self.send_response,
+                                                        data["conn_handle"])
+                self.npi_interceptor.start()
 
 #------------------------------------------------------------------------------------------

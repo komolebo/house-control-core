@@ -17,7 +17,7 @@ class OadHandler(BaseHciHandler):
         pass
 
     def complete(self, rsp_code=STATUS_SUCCESS):
-        self.ext_complete_cb(Messages.OAD_COMPLETE, {"success": STATUS_SUCCESS})
+        self.ext_complete_cb(Messages.OAD_COMPLETE, {"status": STATUS_SUCCESS})
 
     def process_incoming_npi_msg(self, hci_msg_rx):
         self.oad_fsm.on_event(hci_msg_rx)

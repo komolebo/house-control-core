@@ -89,6 +89,14 @@ class Subscriptions:
         ],
         Messages.ESTABLISH_CONN_RESP: [
             # TODO: front
+        ],
+
+# Terminate connection section
+        Messages.TERMINATE_CONN: [
+            MBox.DEV
+        ],
+        Messages.TERMINATE_CONN_RESP: [
+            # TODO: front
         ]
     }
 
@@ -103,20 +111,22 @@ class Validation:
         Messages.NPI_SERIAL_PORT_LISTEN: [],
         Messages.NPI_RX_MSG: ["data"],
         Messages.CENTRAL_RESET: [],
-        Messages.CENTRAL_RESET_RESP: ["success"],
+        Messages.CENTRAL_RESET_RESP: ["status"],
         Messages.CENTRAL_INIT: [],
-        Messages.CENTRAL_INIT_RESP: ["central_ip", "success"],
+        Messages.CENTRAL_INIT_RESP: ["central_ip", "status"],
         Messages.CENTRAL_ADJUST: [],
-        Messages.CENTRAL_ADJUST_RESP: ["success"],
+        Messages.CENTRAL_ADJUST_RESP: ["status"],
         Messages.OAD_START: [],
         Messages.OAD_ABORT: [],
-        Messages.OAD_COMPLETE: ["success"],
+        Messages.OAD_COMPLETE: ["status"],
         Messages.SCAN_DEVICE: [],
         Messages.SCAN_DEVICE_ABORT: [],
-        Messages.SCAN_DEVICE_RESP: ["data", "success"],
+        Messages.SCAN_DEVICE_RESP: ["data", "status"],
         Messages.ESTABLISH_CONN: ["data"],
         Messages.ESTABLISH_CONN_ABORT: [],
-        Messages.ESTABLISH_CONN_RESP: ["data", "success"],
+        Messages.ESTABLISH_CONN_RESP: ["data", "status"],
+        Messages.TERMINATE_CONN: ["conn_handle"],
+        Messages.TERMINATE_CONN_RESP: ["status"]
     }
 
     @classmethod
