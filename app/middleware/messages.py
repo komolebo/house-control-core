@@ -19,10 +19,23 @@ class Messages(AbstractNamedEnumsInClass):
     NPI_SERIAL_PORT_LISTEN = create_id()
     NPI_RX_MSG = create_id()
 
+    CENTRAL_RESET = create_id()
+    CENTRAL_RESET_RESP = create_id()
+
+    CENTRAL_INIT = create_id()
+    CENTRAL_INIT_RESP = create_id()
+
+    CENTRAL_ADJUST = create_id()
+    CENTRAL_ADJUST_RESP = create_id()
+
     OAD_START = create_id()
     OAD_ABORT = create_id()
     OAD_COMPLETE = create_id()
 
-    SCAN_DEVICE_REQ = create_id()
+    SCAN_DEVICE = create_id()
     SCAN_DEVICE_ABORT = create_id()
     SCAN_DEVICE_RESP = create_id()
+
+    ESTABLISH_CONN = create_id()
+    ESTABLISH_CONN_ABORT = create_id()
+    ESTABLISH_CONN_RESP = create_id()

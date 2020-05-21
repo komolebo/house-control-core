@@ -4,11 +4,25 @@ STATUS_SUCCESS = 0
 
 
 class Constants:
+    CHIP_RESET = 0x00
+
     GAP_ADTYPE_FLAGS = 0x01
     GAP_ADTYPE_16BIT_MORE = 0x02
     GAP_ADTYPE_LOCAL_NAME_COMPLETE = 0x09
+
     OAD_SERVICE_UUID = 0xFFC0
     OAD_RESET_SERVICE_UUID = 0xFFD0
+
+    PEER_ADDRTYPE_PUBLIC_OR_PUBLIC_ID = 0x00
+    INIT_PHY_1M = 0x01
+    INIT_PHYPARAM_CONN_INT_MIN = 0x02
+    INIT_PHYPARAM_CONN_INT_MAX = 0x03
+    INIT_PHYPARAM_CONN_LATENCY = 0x04
+    INIT_PHYPARAM_SUP_TIMEOUT = 0x05
+
+    PROFILE_ROLE_CENTRAL = 0x08
+    ADDRMODE_PUBLIC = 0x00
+
 
 
 class Type:
@@ -25,7 +39,11 @@ class EventCode:
 
 class OpCode:
     # transmit codes
+    HCIExt_ResetSystemCmd = 0xFC1D
+    GapInit_getPhyParam = 0xFE61
     GapScan_enable = 0xFE51
+    Gap_DeviceInit = 0xFE00
+    GapInit_connect = 0xFE62
     HCI_LEReadRemoteUsedFeatures = 0x2016
     GATT_DiscPrimaryServiceByUUID = 0xFD86
     ATT_FindByTypeValueReq = 0x06
@@ -46,7 +64,10 @@ class EventId:
 class Event:
     # receive codes
     GAP_HCI_ExtentionCommandStatus = 0x067F
+    GAP_DeviceInitDone = 0x0600
+    HCIExt_ResetSystemCmdDone = 0x041D
     GAP_AdvertiserScannerEvent = 0x0613
+    GAP_EstablishLink = 0x0605
     ATT_ErrorRsp = 0x0501
     ATT_FindByTypeValueRsp = 0x0507
     ATT_FindInfoRsp = 0x0505
@@ -66,7 +87,6 @@ class TxPackBase:
         self.buf_str = None
 
     def as_binary(self):
-        print("Dump TX: ", self.buf_str)
         return self.buf_str
 
 
@@ -103,6 +123,79 @@ class HciPackageRx:
         if not self.len:
             return False
         return True
+
+
+# ------------------------------------------------------------------------
+# Device reset
+class TxPackHciExtResetSystemCmd(TxPackBase):
+    pattern = '<BHBB'
+
+    def __init__(self, type, op_code, reset_type):
+        super().__init__()
+        data_length = 1
+        self.buf_str = struct.pack(self.pattern,
+                                   type,
+                                   op_code,
+                                   data_length,
+                                   reset_type)
+
+
+class RxMsgGapHciExtResetSystemCmdDone:
+    pattern = '<HBH'
+
+    def __init__(self, data_bytes):
+        fields = struct.unpack(self.pattern, data_bytes)
+        (self.event,
+         self.status,
+         self.cmd_op_code) = fields
+
+# ------------------------------------------------------------------------
+# Device init
+class TxPackGapDeviceInit(TxPackBase):
+    pattern = '<BHBBB6s'
+    DATA_LEN = 0x08
+
+    def __init__(self, type, op_code, profile_role, addr_mode, random_addr):
+        super().__init__()
+        data_length = self.DATA_LEN
+        self.buf_str = struct.pack(self.pattern,
+                                   type,
+                                   op_code,
+                                   data_length,
+                                   profile_role,
+                                   addr_mode,
+                                   random_addr)
+
+
+class RxMsgGapDeviceInitDone:
+    pattern = '<HB6sHB16s16s'
+
+    def __init__(self, data_bytes):
+        fields = struct.unpack(self.pattern, data_bytes)
+        (self.event,
+         self.status,
+         self.dev_addr,
+         self.data_pkt_len,
+         self.num_data_pkt,
+         self.irk,
+         self.csrk) = fields
+
+
+# ------------------------------------------------------------------------
+# Device setup
+class TxPackGapInitGetPhyParam(TxPackBase):
+    pattern = '<BHBBB'
+    DATA_LEN = 0x02
+
+    def __init__(self, type, op_code, phy, param_id):
+        super().__init__()
+        data_length = self.DATA_LEN
+        self.buf_str = struct.pack(self.pattern,
+                                   type,
+                                   op_code,
+                                   data_length,
+                                   phy,
+                                   param_id)
 
 
 # ------------------------------------------------------------------------
@@ -163,6 +256,42 @@ class RxMsgGapAdvertiserScannerEvent:
              self.periodic_adv_int,
              self.data_length,
              self.data) = fields
+
+
+# ------------------------------------------------------------------------
+# Init connect
+class TxPackGapInitConnect(TxPackBase):
+    pattern = '<BHBB6sBH'
+    DATA_LEN = 0x0A
+
+    def __init__(self, type, op_code, peer_addr_type, peer_addr, initiating_phy, timeout):
+        super().__init__()
+        data_length = self.DATA_LEN
+        self.buf_str = struct.pack(self.pattern,
+                                   type,
+                                   op_code,
+                                   data_length,
+                                   peer_addr_type,
+                                   peer_addr,
+                                   initiating_phy,
+                                   timeout)
+
+
+class RxMsgGapInitConnect:
+    pattern = '<HBB6sHBHHHB'
+
+    def __init__(self, data_bytes):
+        fields = struct.unpack(self.pattern, data_bytes)
+        (self.event,
+         self.status,
+         self.dev_addr_type,
+         self.dev_addr,
+         self.conn_handle,
+         self.conn_role,
+         self.conn_interval,
+         self.conn_latency,
+         self.timeout,
+         self.clock_accuracy) = fields
 
 
 # ------------------------------------------------------------------------
@@ -291,14 +420,22 @@ class RxMsgAttHandleValueNotification:
 # ------------------------------------------------------------------------
 # Rest HCI handlers
 class RxMsgGapHciExtentionCommandStatus:
-    pattern = '<HBHB'
+    short_pattern = '<HBHB'
+    long_pattern = '<HBHBBH'
 
     def __init__(self, data_bytes):
-        fields = struct.unpack(self.pattern, data_bytes)
-        (self.event,
-         self.status,
-         self.op_code,
-         self.data_length) = fields
+        if len(data_bytes) == struct.calcsize(self.short_pattern):
+            (self.event,
+             self.status,
+             self.op_code,
+             self.data_length) = struct.unpack(self.short_pattern, data_bytes)
+        elif len(data_bytes) == struct.calcsize(self.long_pattern):
+            (self.event,
+             self.status,
+             self.op_code,
+             self.data_length,
+             self.param_id,
+             self.param_data) = struct.unpack(self.long_pattern, data_bytes)
 
 class RxMsgGapTerminateLink:
     pattern = '<HBHB'

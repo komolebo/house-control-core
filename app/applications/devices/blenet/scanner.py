@@ -1,6 +1,7 @@
-from app.applications.devices.hci_manager import BaseHciManager
+from app.applications.devices.hci_manager import BaseHciHandler
 from app.applications.npi.hci_types import TxPackGapScan, Type, OpCode, Event, RxMsgGapHciExtentionCommandStatus, \
     STATUS_SUCCESS, RxMsgGapAdvertiserScannerEvent, EventId, Constants
+from app.middleware.messages import Messages
 
 
 class ScanSettings:
@@ -55,7 +56,7 @@ class ScanFilter:
         return True
 
 
-class ScanManager(BaseHciManager):
+class ScanHandler(BaseHciHandler):
     def __init__(self, data_sender, complete_cb):
         self.data_sender = data_sender
         self.ext_complete_cb = complete_cb
@@ -77,8 +78,8 @@ class ScanManager(BaseHciManager):
     def parse_advert_data(cls, adv_data):
         pass
 
-    def complete(self, rsp_code=None):
-        self.ext_complete_cb(self.scan_list)
+    def complete(self, msg=None, data=None):
+        self.ext_complete_cb(msg, data)
 
     def abort(self):
         self.ext_complete_cb(self.scan_list)
@@ -91,6 +92,7 @@ class ScanManager(BaseHciManager):
             tx_power = adv_scan_msg.tx_power
 
             (reported_services, device_type) = ScanFilter.decode_advert_data(data)
+            print("reported data: {0}, {1}".format(reported_services, device_type))
             if ScanFilter.scanned_device_approved(reported_services, device_type):
                 scan_data = ScanData(address=addr,
                                      dev_type="generic",
@@ -122,6 +124,8 @@ class ScanManager(BaseHciManager):
             if scan_report_msg_data.event_id == EventId.GAP_EVT_ADV_REPORT:
                 self.process_advertisement(scan_report_msg_data)
             elif scan_report_msg_data.event_id == EventId.GAP_EVT_SCAN_DISABLED:
-                assert(len(self.scan_list) == scan_report_msg_data.number_of_reports,
-                       "{0} != {1}".format(len(self.scan_list), scan_report_msg_data.number_of_reports))
-                self.complete()
+                # assert(len(self.scan_list) == scan_report_msg_data.number_of_reports,
+                #        "{0} != {1}".format(len(self.scan_list), scan_report_msg_data.number_of_reports))
+                self.complete(msg=Messages.SCAN_DEVICE_RESP,
+                              data={"data": self.scan_list,
+                                    "success": STATUS_SUCCESS})

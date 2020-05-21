@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod, abstractproperty
 
 
-class BaseHciManager:
+class BaseHciHandler:
     @abstractmethod
     def start(self):
         pass

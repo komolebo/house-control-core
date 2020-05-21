@@ -37,6 +37,27 @@ class Subscriptions:
             MBox.DEV
         ],
 
+# Central reset-init-adjust section
+        Messages.CENTRAL_RESET: [
+            MBox.DEV
+        ],
+        Messages.CENTRAL_RESET_RESP: [
+            MBox.DEV
+        ],
+        Messages.CENTRAL_INIT: [
+            MBox.DEV
+        ],
+        Messages.CENTRAL_INIT_RESP: [
+            MBox.DEV
+        ],
+        Messages.CENTRAL_ADJUST: [
+            MBox.DEV
+        ],
+        Messages.CENTRAL_ADJUST_RESP: [
+            # TODO: front, system
+            MBox.DEV
+        ],
+
 # OAD section
         Messages.OAD_START: [
             MBox.DEV
@@ -49,7 +70,7 @@ class Subscriptions:
         ],
 
 # Scan section
-        Messages.SCAN_DEVICE_REQ: [
+        Messages.SCAN_DEVICE: [
             MBox.DEV
         ],
         Messages.SCAN_DEVICE_ABORT: [
@@ -58,6 +79,17 @@ class Subscriptions:
         Messages.SCAN_DEVICE_RESP: [
             # TODO: front
         ],
+
+# Establish connection section
+        Messages.ESTABLISH_CONN: [
+            MBox.DEV
+        ],
+        Messages.ESTABLISH_CONN_ABORT: [
+            MBox.DEV
+        ],
+        Messages.ESTABLISH_CONN_RESP: [
+            # TODO: front
+        ]
     }
 
 
@@ -70,12 +102,21 @@ class Validation:
         Messages.CLEAR_DEVICE_LOST_COMM: ["id"],
         Messages.NPI_SERIAL_PORT_LISTEN: [],
         Messages.NPI_RX_MSG: ["data"],
+        Messages.CENTRAL_RESET: [],
+        Messages.CENTRAL_RESET_RESP: ["success"],
+        Messages.CENTRAL_INIT: [],
+        Messages.CENTRAL_INIT_RESP: ["central_ip", "success"],
+        Messages.CENTRAL_ADJUST: [],
+        Messages.CENTRAL_ADJUST_RESP: ["success"],
         Messages.OAD_START: [],
         Messages.OAD_ABORT: [],
-        Messages.OAD_COMPLETE: [],
-        Messages.SCAN_DEVICE_REQ: [],
+        Messages.OAD_COMPLETE: ["success"],
+        Messages.SCAN_DEVICE: [],
         Messages.SCAN_DEVICE_ABORT: [],
-        Messages.SCAN_DEVICE_RESP: ["data"]
+        Messages.SCAN_DEVICE_RESP: ["data", "success"],
+        Messages.ESTABLISH_CONN: ["data"],
+        Messages.ESTABLISH_CONN_ABORT: [],
+        Messages.ESTABLISH_CONN_RESP: ["data", "success"],
     }
 
     @classmethod

@@ -1,26 +1,29 @@
 import serial
 
-from app.applications.npi.npi_fsm import Machine
+from app.applications.npi.npi_reader import NpiReader
 from app.middleware.dispatcher import Dispatcher
 from app.middleware.messages import Messages
 from app.middleware.threads import AppThread
 
 
 class NpiManager:
-    def __init__(self, tty_port='/dev/ttyUSB1'):
+    def __init__(self, tty_port='/dev/ttyUSB0'):
         self.ser = serial.Serial(
             port=tty_port,
             baudrate=115200,
+            timeout=0.3
             # parity=serial.PARITY_NONE,
             # stopbits=serial.STOPBITS_ONE,
             # bytesize=serial.EIGHTBITS,
             # timeout=0)
         )
-        self.machine = Machine(self.ser)
+        # self.machine = Machine(self.ser)
+        self.npi_reader = NpiReader(self.ser)
 
     def listen(self):
         while True:  # always listen
-            npi_msg = self.machine.execute()
+            # npi_msg = self.machine.execute()
+            npi_msg = self.npi_reader.read_package()
             print("DUMP RX: ", npi_msg.as_output())
             Dispatcher.send_msg(Messages.NPI_RX_MSG, {'data': npi_msg })
 
@@ -45,7 +48,7 @@ class NpiManager:
 class NpiApp(AppThread):
     def __init__(self, mbox):
         super().__init__(mbox)
-        self.npi = NpiManager('/dev/ttyUSB1')
+        self.npi = NpiManager('/dev/ttyUSB0')
 
     def on_message(self, msg, data):
         if msg is Messages.NPI_SERIAL_PORT_LISTEN:
