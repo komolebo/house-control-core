@@ -6,6 +6,7 @@ from app.applications.devices.blenet.resetter import ResetInterceptHandler
 from app.applications.devices.blenet.scanner import ScanInterceptHandler
 from app.applications.devices.blenet.terminator import TerminateInterceptHandler
 from app.applications.devices.discovery.chars import CharDiscInterceptHandler
+from app.applications.devices.discovery.discovery import DiscoveryManager
 from app.applications.devices.discovery.svc import SvcDiscInterceptHandler
 from app.applications.devices.oad.oad_handler import OadInterceptHandler
 from app.applications.npi.npi_manager import NpiManager
@@ -15,16 +16,12 @@ from app.middleware.nrc import RespCode
 from app.middleware.threads import AppThread
 
 
-class DeviceType:
-    motion = "motion"
-    gas = "gas"
-
-
 class DeviceManager:
     def __init__(self):
         self.npi = NpiManager('/dev/ttyUSB0')
         self.data_sender = lambda data: self.npi.send_binary_data(data)
         self.npi_interceptor = None
+        self.disc_manager = DiscoveryManager()
 
     def process_npi_msg(self, npi_msg):
         if self.npi_interceptor:
@@ -80,12 +77,18 @@ class DeviceApp(AppThread, DeviceManager):
 
         elif msg is Messages.ESTABLISH_CONN:
             if self.npi_interceptor:
-                Dispatcher.send_msg(Messages.ESTABLISH_CONN_RESP, {"data": 0, "status": RespCode.BUSY})
+                Dispatcher.send_msg(Messages.ESTABLISH_CONN_RESP, {"conn_handle": 0xFFFF,
+                                                                   "status": RespCode.BUSY,
+                                                                   "mac": 0,
+                                                                   "type": None})
             else:
                 self.npi_interceptor = EstablishInterceptHandler(self.data_sender, self.send_response, data)
                 self.npi_interceptor.start()
         elif msg is Messages.ESTABLISH_CONN_ABORT:
             self.npi_interceptor.abort()
+        elif msg is Messages.ESTABLISH_CONN_RESP:
+            if data["status"] is RespCode.SUCCESS:
+                self.disc_manager.handle_new_conn(data["conn_handle"], data["type"])
 
         elif msg is Messages.TERMINATE_CONN:
             if self.npi_interceptor:
@@ -106,6 +109,10 @@ class DeviceApp(AppThread, DeviceManager):
                                                                self.send_response,
                                                                data["conn_handle"])
                 self.npi_interceptor.start()
+        elif msg is Messages.DEV_SVC_DISCOVER_RESP:
+            if data["status"] == RespCode.SUCCESS:
+                self.disc_manager.handle_svc_report(data["conn_handle"], data["services"])
+
         elif msg is Messages.DEV_CHAR_DISCOVER:
             if self.npi_interceptor:
                 Dispatcher.send_msg(Messages.DEV_CHAR_DISCOVER_RESP, {"status": RespCode.BUSY,
@@ -116,5 +123,7 @@ class DeviceApp(AppThread, DeviceManager):
                                                                 self.send_response,
                                                                 data["conn_handle"])
                 self.npi_interceptor.start()
-
+        elif msg is Messages.DEV_CHAR_DISCOVER_RESP:
+            if data["status"] == RespCode.SUCCESS:
+                self.disc_manager.handle_char_report(data["conn_handle"], data["chars"])
 #------------------------------------------------------------------------------------------

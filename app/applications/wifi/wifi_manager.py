@@ -24,19 +24,16 @@ class WifiManager(AppThread):
             #     Dispatcher.send_msg(Messages.SCAN_DEVICE, {})
 
             if count == 2:
-                Dispatcher.send_msg(Messages.ESTABLISH_CONN, {'data':
-                                                               [0xD1, 0x35, 0xDA, 0xF2, 0xF8, 0xF0]})
+                Dispatcher.send_msg(Messages.ESTABLISH_CONN, {'mac': [0xD1, 0x35, 0xDA, 0xF2, 0xF8, 0xF0],
+                                                              'type': "motion"})
 
-            if count == 4:
-                Dispatcher.send_msg(Messages.DEV_SVC_DISCOVER, {"conn_handle": 0})
+            # if count == 4:
+            #     Dispatcher.send_msg(Messages.DEV_SVC_DISCOVER, {"conn_handle": 0})
             # if count == 6:
             #     Dispatcher.send_msg(Messages.TERMINATE_CONN, {"conn_handle": 0})
 
             # if count == 2:
             #     print ('OAD START')
             #     Dispatcher.send_msg(Messages.OAD_START, {})
-
-            if count == 6:
-                Dispatcher.send_msg(Messages.DEV_CHAR_DISCOVER, {"conn_handle": 0})
 
             count += 1

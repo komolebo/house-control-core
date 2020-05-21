@@ -88,6 +88,7 @@ class Subscriptions:
             MBox.DEV
         ],
         Messages.ESTABLISH_CONN_RESP: [
+            MBox.DEV
             # TODO: front
         ],
 
@@ -96,12 +97,14 @@ class Subscriptions:
             MBox.DEV
         ],
         Messages.DEV_SVC_DISCOVER_RESP: [
+            MBox.DEV
             # TODO: front
         ],
         Messages.DEV_CHAR_DISCOVER: [
             MBox.DEV
         ],
         Messages.DEV_CHAR_DISCOVER_RESP: [
+            MBox.DEV
             # TODO: front
         ],
 
@@ -113,6 +116,12 @@ class Subscriptions:
             # TODO: front
         ],
         Messages.DEVICE_DISCONN: [
+            MBox.DEV
+            # TODO: front
+        ],
+
+# Errors section
+        Messages.ERR_DEV_MISSING_SVC: [
             MBox.DEV
             # TODO: front
         ]
@@ -140,16 +149,17 @@ class Validation:
         Messages.SCAN_DEVICE: [],
         Messages.SCAN_DEVICE_ABORT: [],
         Messages.SCAN_DEVICE_RESP: ["data", "status"],
-        Messages.ESTABLISH_CONN: ["data"],
+        Messages.ESTABLISH_CONN: ["mac", "type"],
         Messages.ESTABLISH_CONN_ABORT: [],
-        Messages.ESTABLISH_CONN_RESP: ["data", "status"],
+        Messages.ESTABLISH_CONN_RESP: ["conn_handle", "status", "mac", "type"],
         Messages.TERMINATE_CONN: ["conn_handle"],
         Messages.TERMINATE_CONN_RESP: ["status"],
         Messages.DEVICE_DISCONN: ["conn_handle", "reason"],
         Messages.DEV_SVC_DISCOVER: ["conn_handle"],
         Messages.DEV_SVC_DISCOVER_RESP: ["conn_handle", "services", "status"],
         Messages.DEV_CHAR_DISCOVER: ["conn_handle"],
-        Messages.DEV_CHAR_DISCOVER_RESP: ["conn_handle", "chars", "status"]
+        Messages.DEV_CHAR_DISCOVER_RESP: ["conn_handle", "chars", "status"],
+        Messages.ERR_DEV_MISSING_SVC: ["conn_handle"]
     }
 
     @classmethod

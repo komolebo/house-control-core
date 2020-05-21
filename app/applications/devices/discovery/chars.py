@@ -68,8 +68,6 @@ class CharDiscInterceptHandler(HciInterceptHandler, HciAckHandler):
                 if msg_data.status == STATUS_SUCCESS:
                     self.handle_char_resp(msg_data)
                 elif msg_data.status == Constants.BLE_PROCEDURE_COMPLETE:
-                    for i in self.char_data_list:
-                        print(i.handle, i.uuid)
                     self.complete(msg=Messages.DEV_CHAR_DISCOVER_RESP,
                                   data={"conn_handle": self.conn_handle,
                                         "status" : STATUS_SUCCESS,

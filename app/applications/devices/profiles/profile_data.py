@@ -1,4 +1,4 @@
-from app.applications.devices.device_manager import DeviceType
+from app.applications.devices.device_data import DeviceType
 from app.applications.devices.profiles.profile_uuid import ServiceUuid
 
 

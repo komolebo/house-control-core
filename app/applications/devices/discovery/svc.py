@@ -1,7 +1,6 @@
 from app.applications.devices.blenet.ack_handler import HciAckHandler
 from app.applications.devices.hci_manager import HciInterceptHandler
-from app.applications.npi.hci_types import Event, Type, OpCode, Constants, TxPackGapInitConnect, \
-    TxPackGattDiscoverAllPrimaryServices, STATUS_SUCCESS, RxMsgAttReadByGrpTypeRsp
+from app.applications.npi.hci_types import Event, Type, OpCode, Constants, TxPackGattDiscoverAllPrimaryServices, STATUS_SUCCESS, RxMsgAttReadByGrpTypeRsp
 from app.middleware.messages import Messages
 
 
