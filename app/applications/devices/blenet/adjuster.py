@@ -1,13 +1,13 @@
 from time import sleep
 
 from app.applications.devices.blenet.ack_handler import HciAckHandler
-from app.applications.devices.hci_manager import BaseHciHandler
+from app.applications.devices.hci_manager import HciInterceptHandler
 from app.applications.npi.hci_types import Event, Type, OpCode, Constants, TxPackGapInitGetPhyParam, \
     RxMsgGapHciExtentionCommandStatus, STATUS_SUCCESS
 from app.middleware.messages import Messages
 
 
-class AdjustHandler(BaseHciHandler, HciAckHandler):
+class AdjustInterceptHandler(HciInterceptHandler, HciAckHandler):
     def __init__(self, data_sender, complete_cb):
         self.data_sender = data_sender
         self.ext_complete_cb = complete_cb

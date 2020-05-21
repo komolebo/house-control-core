@@ -1,11 +1,11 @@
 from app.applications.devices.blenet.ack_handler import HciAckHandler
-from app.applications.devices.hci_manager import BaseHciHandler
+from app.applications.devices.hci_manager import HciInterceptHandler
 from app.applications.npi.hci_types import Type, OpCode, Constants, TxPackGapTerminateLink, \
     Event, STATUS_SUCCESS, RxMsgGapTerminateLink
 from app.middleware.messages import Messages
 
 
-class TerminateHandler(BaseHciHandler, HciAckHandler):
+class TerminateInterceptHandler(HciInterceptHandler, HciAckHandler):
     def __init__(self, data_sender, complete_cb, conn_handle):
         self.ext_complete_cb = complete_cb
         self.data_sender = data_sender

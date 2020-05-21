@@ -42,3 +42,5 @@ class Messages(AbstractNamedEnumsInClass):
 
     TERMINATE_CONN = create_id()
     TERMINATE_CONN_RESP = create_id()
+
+    DEVICE_DISCONN = create_id()

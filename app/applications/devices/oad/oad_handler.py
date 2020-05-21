@@ -1,10 +1,10 @@
-from app.applications.devices.hci_manager import BaseHciHandler
+from app.applications.devices.hci_manager import HciInterceptHandler
 from app.applications.devices.oad.oad_fsm import OadFsm
 from app.applications.npi.hci_types import STATUS_SUCCESS
 from app.middleware.messages import Messages
 
 
-class OadHandler(BaseHciHandler):
+class OadInterceptHandler(HciInterceptHandler):
     def __init__(self, data_sender, complete_cb):
         self.ext_complete_cb = complete_cb
         self.oad_fsm = OadFsm(data_sender, self.complete)

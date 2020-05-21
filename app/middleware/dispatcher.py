@@ -97,6 +97,10 @@ class Subscriptions:
         ],
         Messages.TERMINATE_CONN_RESP: [
             # TODO: front
+        ],
+        Messages.DEVICE_DISCONN: [
+            MBox.DEV
+            # TODO: front
         ]
     }
 
@@ -126,7 +130,8 @@ class Validation:
         Messages.ESTABLISH_CONN_ABORT: [],
         Messages.ESTABLISH_CONN_RESP: ["data", "status"],
         Messages.TERMINATE_CONN: ["conn_handle"],
-        Messages.TERMINATE_CONN_RESP: ["status"]
+        Messages.TERMINATE_CONN_RESP: ["status"],
+        Messages.DEVICE_DISCONN: ["conn_handle", "reason"]
     }
 
     @classmethod

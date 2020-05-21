@@ -1,13 +1,13 @@
 from threading import Timer
 
-from app.applications.devices.hci_manager import BaseHciHandler
+from app.applications.devices.hci_manager import HciInterceptHandler
 from app.applications.npi.hci_types import Type, OpCode, Constants, TxPackHciExtResetSystemCmd, Event, \
     RxMsgGapHciExtResetSystemCmdDone, STATUS_SUCCESS
 from app.middleware.dispatcher import Dispatcher
 from app.middleware.messages import Messages
 
 
-class ResetHandler(BaseHciHandler):
+class ResetInterceptHandler(HciInterceptHandler):
     RESET_DELAY_SEC = 0.5
 
     def __init__(self, data_sender, complete_cb):
