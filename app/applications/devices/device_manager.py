@@ -5,6 +5,8 @@ from app.applications.devices.blenet.listeners import DisconnectListenHandler
 from app.applications.devices.blenet.resetter import ResetInterceptHandler
 from app.applications.devices.blenet.scanner import ScanInterceptHandler
 from app.applications.devices.blenet.terminator import TerminateInterceptHandler
+from app.applications.devices.discovery.chars import CharDiscInterceptHandler
+from app.applications.devices.discovery.svc import SvcDiscInterceptHandler
 from app.applications.devices.oad.oad_handler import OadInterceptHandler
 from app.applications.npi.npi_manager import NpiManager
 from app.middleware.dispatcher import Dispatcher
@@ -13,7 +15,7 @@ from app.middleware.nrc import RespCode
 from app.middleware.threads import AppThread
 
 
-class DeviceTypes:
+class DeviceType:
     motion = "motion"
     gas = "gas"
 
@@ -92,6 +94,27 @@ class DeviceApp(AppThread, DeviceManager):
                 self.npi_interceptor = TerminateInterceptHandler(self.data_sender,
                                                                  self.send_response,
                                                                  data["conn_handle"])
+                self.npi_interceptor.start()
+
+        elif msg is Messages.DEV_SVC_DISCOVER:
+            if self.npi_interceptor:
+                Dispatcher.send_msg(Messages.DEV_SVC_DISCOVER_RESP, {"status": RespCode.BUSY,
+                                                                    "services": [],
+                                                                    "conn_handle": data["conn_handle"]})
+            else:
+                self.npi_interceptor = SvcDiscInterceptHandler(self.data_sender,
+                                                               self.send_response,
+                                                               data["conn_handle"])
+                self.npi_interceptor.start()
+        elif msg is Messages.DEV_CHAR_DISCOVER:
+            if self.npi_interceptor:
+                Dispatcher.send_msg(Messages.DEV_CHAR_DISCOVER_RESP, {"status": RespCode.BUSY,
+                                                                      "chars": [],
+                                                                      "conn_handle": data["conn_handle"]})
+            else:
+                self.npi_interceptor = CharDiscInterceptHandler(self.data_sender,
+                                                                self.send_response,
+                                                                data["conn_handle"])
                 self.npi_interceptor.start()
 
 #------------------------------------------------------------------------------------------

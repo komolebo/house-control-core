@@ -44,3 +44,9 @@ class Messages(AbstractNamedEnumsInClass):
     TERMINATE_CONN_RESP = create_id()
 
     DEVICE_DISCONN = create_id()
+
+    DEV_SVC_DISCOVER = create_id()
+    DEV_SVC_DISCOVER_RESP = create_id()
+
+    DEV_CHAR_DISCOVER = create_id()
+    DEV_CHAR_DISCOVER_RESP = create_id()

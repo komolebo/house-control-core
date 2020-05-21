@@ -8,6 +8,7 @@ class Constants:
 
     GAP_ADTYPE_FLAGS = 0x01
     GAP_ADTYPE_16BIT_MORE = 0x02
+    GAP_ADTYPE_128BIT_MORE = 0x10
     GAP_ADTYPE_LOCAL_NAME_COMPLETE = 0x09
 
     OAD_SERVICE_UUID = 0xFFC0
@@ -24,6 +25,14 @@ class Constants:
     ADDRMODE_PUBLIC = 0x00
 
     REMOTE_USER_TERMINATED = 0x13
+
+    BLE_PROCEDURE_COMPLETE = 0x1A
+
+    HANDLE_BYTE_LEN = 2
+    FORMAT_BYTE_LEN = 1
+    HANDLE_BT_UUID_TYPE_16BIT_FORMAT = 0x01
+    UUID_16BIT_IN_BYTES = 2
+    UUID_128BIT_IN_BYTES = 16
 
 
 class Type:
@@ -47,6 +56,8 @@ class OpCode:
     GapInit_connect = 0xFE62
     HCI_LEReadRemoteUsedFeatures = 0x2016
     GATT_DiscPrimaryServiceByUUID = 0xFD86
+    GATT_DiscAllPrimaryServices = 0xFD90
+    GATT_DiscAllCharDescs = 0xFD84
     ATT_FindByTypeValueReq = 0x06
     GAP_UpdateLinkParamReq = 0xFE11
     ATT_DiscAllCharDescs = 0xFD84
@@ -79,6 +90,7 @@ class Event:
     ATT_MtuUpdatedEvt = 0x057F
     ATT_HandleValueNotification = 0x051B
     ATT_ExecuteWriteRsp = 0x0519
+    ATT_ReadByGrpTypeRsp = 0x0511
     GAP_TerminateLink = 0x0606
 
 
@@ -445,6 +457,36 @@ class RxMsgGapTerminateLink:
 
 
 # ------------------------------------------------------------------------
+# Discovery handlers
+class TxPackGattDiscoverAllPrimaryServices(TxPackBase):
+    pattern = '<BHBH'
+
+    def __init__(self, type, op_code, conn_handle):
+        super().__init__()
+        data_length = 2
+        self.buf_str = struct.pack(self.pattern,
+                                   type,
+                                   op_code,
+                                   data_length,
+                                   conn_handle)
+
+
+class TxPackGattDiscoverAllCharsDescs(TxPackBase):
+    pattern = '<BHBHHH'
+
+    def __init__(self, type, op_code, conn_handle, start_handle, end_handle):
+        super().__init__()
+        data_length = 6
+        self.buf_str = struct.pack(self.pattern,
+                                   type,
+                                   op_code,
+                                   data_length,
+                                   conn_handle,
+                                   start_handle,
+                                   end_handle)
+
+
+# ------------------------------------------------------------------------
 # Rest HCI handlers
 class RxMsgGapHciExtentionCommandStatus:
     short_pattern = '<HBHB'
@@ -463,3 +505,46 @@ class RxMsgGapHciExtentionCommandStatus:
              self.data_length,
              self.param_id,
              self.param_data) = struct.unpack(self.long_pattern, data_bytes)
+
+
+class RxMsgAttReadByGrpTypeRsp:
+    short_pattern = '<HBHB'
+    long_pattern = '<HBHBBHH{}s'
+
+    def __init__(self, data_bytes):
+        if len(data_bytes) == struct.calcsize(self.short_pattern):
+            (self.event,
+             self.status,
+             self.conn_handle,
+             self.pdu_len) = struct.unpack(self.short_pattern, data_bytes)
+        else:
+            val_len = len(data_bytes) - struct.calcsize(self.long_pattern.format(0))
+            (self.event,
+             self.status,
+             self.conn_handle,
+             self.pdu_len,
+             self.length,
+             self.attr_handle,
+             self.eng_grp_handle,
+             self.value) = struct.unpack(self.long_pattern.format(val_len), data_bytes)
+
+
+class RxMsgAttFindInfoRsp:
+    short_pattern = '<HBHB'
+    long_pattern = '<HBHBB{}s'
+
+    def __init__(self, data_bytes):
+        if len(data_bytes) == struct.calcsize(self.short_pattern):
+            (self.event,
+             self.status,
+             self.conn_handle,
+             self.pdu_len) = struct.unpack(self.short_pattern, data_bytes)
+        else:
+            val_len = len(data_bytes) - struct.calcsize(self.long_pattern.format(0))
+            (self.event,
+             self.status,
+             self.conn_handle,
+             self.pdu_len,
+             self.format,
+             self.data) = struct.unpack(self.long_pattern.format(val_len), data_bytes)
+

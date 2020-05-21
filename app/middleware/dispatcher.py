@@ -91,6 +91,20 @@ class Subscriptions:
             # TODO: front
         ],
 
+# Discovery section
+        Messages.DEV_SVC_DISCOVER: [
+            MBox.DEV
+        ],
+        Messages.DEV_SVC_DISCOVER_RESP: [
+            # TODO: front
+        ],
+        Messages.DEV_CHAR_DISCOVER: [
+            MBox.DEV
+        ],
+        Messages.DEV_CHAR_DISCOVER_RESP: [
+            # TODO: front
+        ],
+
 # Terminate connection section
         Messages.TERMINATE_CONN: [
             MBox.DEV
@@ -131,7 +145,11 @@ class Validation:
         Messages.ESTABLISH_CONN_RESP: ["data", "status"],
         Messages.TERMINATE_CONN: ["conn_handle"],
         Messages.TERMINATE_CONN_RESP: ["status"],
-        Messages.DEVICE_DISCONN: ["conn_handle", "reason"]
+        Messages.DEVICE_DISCONN: ["conn_handle", "reason"],
+        Messages.DEV_SVC_DISCOVER: ["conn_handle"],
+        Messages.DEV_SVC_DISCOVER_RESP: ["conn_handle", "services", "status"],
+        Messages.DEV_CHAR_DISCOVER: ["conn_handle"],
+        Messages.DEV_CHAR_DISCOVER_RESP: ["conn_handle", "chars", "status"]
     }
 
     @classmethod
