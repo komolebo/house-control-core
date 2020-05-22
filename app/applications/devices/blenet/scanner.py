@@ -1,7 +1,6 @@
 from app.applications.devices.blenet.ack_handler import HciAckHandler
-from app.applications.devices.hci_manager import HciInterceptHandler
-from app.applications.npi.hci_types import TxPackGapScan, Type, OpCode, Event, RxMsgGapHciExtentionCommandStatus, \
-    STATUS_SUCCESS, RxMsgGapAdvertiserScannerEvent, EventId, Constants
+from app.applications.devices.hci_handler import HciInterceptHandler
+from app.applications.npi.hci_types import TxPackGapScan, Type, OpCode, Event, STATUS_SUCCESS, RxMsgGapAdvertiserScannerEvent, EventId, Constants
 from app.middleware.messages import Messages
 
 

@@ -34,6 +34,9 @@ class Constants:
     UUID_16BIT_IN_BYTES = 2
     UUID_128BIT_IN_BYTES = 16
 
+    ENABLE_NOTIFICATION = 0x01
+    ENABLE_INDICATION = 0x02
+
 
 class Type:
     LinkCtrlCommand = 0x01
@@ -312,13 +315,14 @@ class RxMsgGapInitConnect:
 # Write char value handlers
 class TxPackWriteCharValue(TxPackBase):
     pattern = '<BHBHHH'
+    LEN = 0x06
 
-    def __init__(self, type, op_code, len, conn_handle, handle, value):
+    def __init__(self, type, op_code, conn_handle, handle, value):
         super().__init__()
         self.buf_str = struct.pack(self.pattern,
                                    type,
                                    op_code,
-                                   len,
+                                   self.LEN,
                                    conn_handle,
                                    handle,
                                    value)

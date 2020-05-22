@@ -52,3 +52,6 @@ class Messages(AbstractNamedEnumsInClass):
     DEV_CHAR_DISCOVER_RESP = create_id()
 
     ERR_DEV_MISSING_SVC = create_id()
+
+    ENABLE_DEV_IND = create_id()
+    ENABLE_DEV_IND_RESP = create_id()

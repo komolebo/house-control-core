@@ -132,7 +132,6 @@ class StateOadNotifyEnable(State):
         # Enable image identify config
         tx_msg = TxPackWriteCharValue(Type.LinkCtrlCommand,
                                       OpCode.GATT_WriteCharValue,
-                                      self.NOTIFY_REQ_BYTE_LEN,
                                       OadSettings.CONN_HANDLE,
                                       config_handle,
                                       OadSettings.CFG_ENABLE_VALUE)

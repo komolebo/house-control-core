@@ -6,6 +6,21 @@ class ServiceUuid:
     TAMPER = 0x1150
 
 class CharUuid:
+# Gatt general UUIDs
+    GATT_CHAR_DECL_UUID = 0x2803
+    GATT_PRIM_SERV_DECL_UUID = 0x2800
+    GATT_CHAR_DESC_UUID = 0x2901
+    GATT_CCC_UUID = 0x2902
+
+# Generic device UUIDs
+    DEVICE_NAME_UUID = 0x2A00
+    APPEARANCE_UUID = 0x2A01
+    PREFER_CONN_PARAM_UUID = 0x2A04
+    BATTERY_LEVEL_UUID = 0x2A19
+    SYSTEM_ID_UUID = 0x2A23
+    SERIAL_NUM_UUID = 0x2A23
+
+# Custom device UUIDs
     LS_LED1_UUID = 0x1112
     LS_LED1_LEN = 1
 

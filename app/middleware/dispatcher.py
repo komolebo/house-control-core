@@ -107,6 +107,13 @@ class Subscriptions:
             MBox.DEV
             # TODO: front
         ],
+        Messages.ENABLE_DEV_IND: [
+            MBox.DEV
+        ],
+        Messages.ENABLE_DEV_IND_RESP: [
+            MBox.DEV,
+            # TODO: front
+        ],
 
 # Terminate connection section
         Messages.TERMINATE_CONN: [
@@ -159,6 +166,8 @@ class Validation:
         Messages.DEV_SVC_DISCOVER_RESP: ["conn_handle", "services", "status"],
         Messages.DEV_CHAR_DISCOVER: ["conn_handle"],
         Messages.DEV_CHAR_DISCOVER_RESP: ["conn_handle", "chars", "status"],
+        Messages.ENABLE_DEV_IND: ["conn_handle"],
+        Messages.ENABLE_DEV_IND_RESP: ["conn_handle", "status"],
         Messages.ERR_DEV_MISSING_SVC: ["conn_handle"]
     }
 

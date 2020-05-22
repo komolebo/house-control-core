@@ -1,6 +1,6 @@
 from threading import Timer
 
-from app.applications.devices.hci_manager import HciInterceptHandler
+from app.applications.devices.hci_handler import HciInterceptHandler
 from app.applications.npi.hci_types import Type, OpCode, Constants, TxPackHciExtResetSystemCmd, Event, \
     RxMsgGapHciExtResetSystemCmdDone, STATUS_SUCCESS
 from app.middleware.dispatcher import Dispatcher

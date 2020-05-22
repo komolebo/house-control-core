@@ -7,7 +7,7 @@ class HciInterceptHandler:
         pass
 
     @abstractmethod
-    def complete(self, rsp_code=None):
+    def complete(self, msg=None, data=None):
         pass
 
     @abstractmethod
