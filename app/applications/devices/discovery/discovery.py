@@ -7,12 +7,11 @@ from app.middleware.messages import Messages
 class DiscoveryHandler:
     @staticmethod
     def diagnose_device_uuid(dev_type, svc_list):
-        required_services = ProfileTable.info[dev_type]
+        required_services = ProfileTable.svc_type_map[dev_type]
         for req_svc in required_services:
             if req_svc not in svc_list:
                 return False
         return True
-
 
 
 # ProfileTable.info[DeviceType.gas]

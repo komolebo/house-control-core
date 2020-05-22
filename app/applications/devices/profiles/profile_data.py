@@ -3,7 +3,7 @@ from app.applications.devices.profiles.profile_uuid import ServiceUuid
 
 
 class ProfileTable:
-    info = {
+    svc_type_map = {
         DeviceType.motion: [
             ServiceUuid.CONFIG,
             ServiceUuid.DATA,

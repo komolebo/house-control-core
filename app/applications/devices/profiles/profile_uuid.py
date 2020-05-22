@@ -1,9 +1,9 @@
 class ServiceUuid:
-    LED = 0x1120
+    LED = 0x1110
     BUTTON = 0x1120
-    DATA = 0x1120
-    CONFIG = 0x1120
-    TAMPER = 0x1120
+    DATA = 0x1130
+    CONFIG = 0x1140
+    TAMPER = 0x1150
 
 class CharUuid:
     LS_LED1_UUID = 0x1112

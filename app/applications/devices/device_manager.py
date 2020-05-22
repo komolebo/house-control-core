@@ -18,7 +18,7 @@ from app.middleware.threads import AppThread
 
 class DeviceManager:
     def __init__(self):
-        self.npi = NpiManager('/dev/ttyUSB0')
+        self.npi = NpiManager() # '/dev/ttyUSB0')
         self.data_sender = lambda data: self.npi.send_binary_data(data)
         self.npi_interceptor = None
         self.disc_manager = DiscoveryManager()

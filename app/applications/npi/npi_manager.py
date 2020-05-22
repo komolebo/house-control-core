@@ -48,7 +48,7 @@ class NpiManager:
 class NpiApp(AppThread):
     def __init__(self, mbox):
         super().__init__(mbox)
-        self.npi = NpiManager('/dev/ttyUSB0')
+        self.npi = NpiManager()#'/dev/ttyUSB0')
 
     def on_message(self, msg, data):
         if msg is Messages.NPI_SERIAL_PORT_LISTEN:

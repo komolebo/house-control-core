@@ -509,7 +509,7 @@ class RxMsgGapHciExtentionCommandStatus:
 
 class RxMsgAttReadByGrpTypeRsp:
     short_pattern = '<HBHB'
-    long_pattern = '<HBHBBHH{}s'
+    long_pattern = '<HBHBB{}s'
 
     def __init__(self, data_bytes):
         if len(data_bytes) == struct.calcsize(self.short_pattern):
@@ -524,8 +524,6 @@ class RxMsgAttReadByGrpTypeRsp:
              self.conn_handle,
              self.pdu_len,
              self.length,
-             self.attr_handle,
-             self.eng_grp_handle,
              self.value) = struct.unpack(self.long_pattern.format(val_len), data_bytes)
 
 

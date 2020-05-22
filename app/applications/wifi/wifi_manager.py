@@ -1,4 +1,3 @@
-from mailbox import Message
 from time import sleep
 
 from app.middleware.dispatcher import Dispatcher
@@ -23,7 +22,7 @@ class WifiManager(AppThread):
             # if count == 2:
             #     Dispatcher.send_msg(Messages.SCAN_DEVICE, {})
 
-            if count == 2:
+            if count == 1:
                 Dispatcher.send_msg(Messages.ESTABLISH_CONN, {'mac': [0xD1, 0x35, 0xDA, 0xF2, 0xF8, 0xF0],
                                                               'type': "motion"})
 
@@ -32,7 +31,7 @@ class WifiManager(AppThread):
             # if count == 6:
             #     Dispatcher.send_msg(Messages.TERMINATE_CONN, {"conn_handle": 0})
 
-            # if count == 2:
+            # if count == 4:
             #     print ('OAD START')
             #     Dispatcher.send_msg(Messages.OAD_START, {})
 

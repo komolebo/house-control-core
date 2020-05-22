@@ -15,10 +15,18 @@ class SvcDiscInterceptHandler(HciInterceptHandler, HciAckHandler):
         self.svc_list = []
 
     def handle_svc_resp(self, svc_resp):
-        svc_uuid = svc_resp.value
-        if len(svc_uuid) == Constants.GAP_ADTYPE_16BIT_MORE:
-            svc_uuid = int.from_bytes(svc_uuid, byteorder='little')
-        self.svc_list.append(svc_uuid)
+        item_len = svc_resp.length
+        item_num = (svc_resp.pdu_len - 1) // item_len
+        uuid_len = item_len - 2 * Constants.HANDLE_BYTE_LEN
+
+        for i in range(item_num):
+            pos = item_len * i + 2 * Constants.HANDLE_BYTE_LEN
+            svc_uuid = svc_resp.value[pos : pos + uuid_len]
+
+            if len(svc_uuid) == Constants.GAP_ADTYPE_16BIT_MORE:
+                svc_uuid = int.from_bytes(svc_uuid, byteorder='little')
+
+            self.svc_list.append(svc_uuid)
 
     def start(self):
         tx_msg = TxPackGattDiscoverAllPrimaryServices(Type.LinkCtrlCommand,
