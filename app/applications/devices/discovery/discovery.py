@@ -46,6 +46,14 @@ class DiscoveryHandler:
                 return uuid_handle + 1 if uuid_handle + 1 in all_svc_handles else None
         return None
 
+    def get_uuid_by_handle(self, conn_handle, handle):
+        if conn_handle in self.handle_info.keys():
+            for char in self.handle_info[conn_handle].chars:
+                if char.handle == handle:
+                    return char.uuid
+        return False
+
+
     @classmethod
     def diagnose_device_svc(cls, dev_type, svc_list):
         required_services = ProfileTable.svc_type_map[dev_type]

@@ -11,6 +11,7 @@ class EstablishInterceptHandler(HciInterceptHandler, HciAckHandler):
         self.ext_complete_cb = complete_cb
         self.peer_addr = bytearray(data["mac"])
         self.device_type = data["type"]
+        self.device_name = data["name"]
         HciAckHandler.__init__(self, [
             Event.GAP_HCI_ExtentionCommandStatus,
         ])
@@ -44,4 +45,5 @@ class EstablishInterceptHandler(HciInterceptHandler, HciAckHandler):
                                       data={"mac": self.peer_addr,
                                             "conn_handle": msg_data.conn_handle,
                                             "status": STATUS_SUCCESS,
-                                            "type": self.device_type})
+                                            "type": self.device_type,
+                                            "name": self.device_name})

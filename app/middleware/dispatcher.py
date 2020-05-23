@@ -115,6 +115,14 @@ class Subscriptions:
             # TODO: front
         ],
 
+# Data change section
+        Messages.DEV_DATA_CHANGE: [
+            MBox.DEV
+        ],
+        Messages.DEV_DATA_CHANGE_RESP: [  # TODO: not sure if needed
+            MBox.DEV
+        ],
+
 # Terminate connection section
         Messages.TERMINATE_CONN: [
             MBox.DEV
@@ -130,6 +138,10 @@ class Subscriptions:
 # Errors section
         Messages.ERR_DEV_MISSING_SVC: [
             MBox.DEV
+            # TODO: front
+        ],
+        Messages.ERR_DEV_CONN_NOT_EXIST: [
+            MBox.DEV,
             # TODO: front
         ]
     }
@@ -156,9 +168,9 @@ class Validation:
         Messages.SCAN_DEVICE: [],
         Messages.SCAN_DEVICE_ABORT: [],
         Messages.SCAN_DEVICE_RESP: ["data", "status"],
-        Messages.ESTABLISH_CONN: ["mac", "type"],
+        Messages.ESTABLISH_CONN: ["mac", "type", "name"],
         Messages.ESTABLISH_CONN_ABORT: [],
-        Messages.ESTABLISH_CONN_RESP: ["conn_handle", "status", "mac", "type"],
+        Messages.ESTABLISH_CONN_RESP: ["conn_handle", "status", "mac", "type", "name"],
         Messages.TERMINATE_CONN: ["conn_handle"],
         Messages.TERMINATE_CONN_RESP: ["status"],
         Messages.DEVICE_DISCONN: ["conn_handle", "reason"],
@@ -168,7 +180,10 @@ class Validation:
         Messages.DEV_CHAR_DISCOVER_RESP: ["conn_handle", "chars", "status"],
         Messages.ENABLE_DEV_IND: ["conn_handle"],
         Messages.ENABLE_DEV_IND_RESP: ["conn_handle", "status"],
-        Messages.ERR_DEV_MISSING_SVC: ["conn_handle"]
+        Messages.DEV_DATA_CHANGE: ["conn_handle", "handle", "value"],
+        Messages.DEV_DATA_CHANGE_RESP: ["status"],
+        Messages.ERR_DEV_MISSING_SVC: ["conn_handle"],
+        Messages.ERR_DEV_CONN_NOT_EXIST: ["conn_handle"]
     }
 
     @classmethod

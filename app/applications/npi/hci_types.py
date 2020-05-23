@@ -68,6 +68,7 @@ class OpCode:
     ATT_ExchangeMTUReq = 0xFD02
     GATT_WriteNoRsp = 0xFDB6
     GATT_WriteLongCharValue = 0xFD96
+    ATT_HandleValueConfirmation = 0xFD1E
     GAP_TerminateLinkRequest = 0xFE0A
 
 
@@ -423,10 +424,25 @@ class RxMsgAttMtuUpdatedEvt:
 
 # ------------------------------------------------------------------------
 # Handle value notification responses
+class TxPackAttHandleValueConfirmation(TxPackBase):
+    pattern = '<BHBH'
+    LEN = 2
+
+    def __init__(self, type, op_code, conn_handle):
+        super().__init__()
+        self.buf_str = struct.pack(self.pattern,
+                                   type,
+                                   op_code,
+                                   self.LEN,
+                                   conn_handle)
+
+
 class RxMsgAttHandleValueNotification:
-    def __init__(self, data_bytes, exp_val_len):
-        pattern = '<HBHBH{0}s'.format(exp_val_len)
-        fields = struct.unpack(pattern, data_bytes)
+    pattern = '<HBHBH{0}s'
+
+    def __init__(self, data_bytes):
+        data_len = len(data_bytes) - struct.calcsize(self.pattern.format(0))
+        fields = struct.unpack(self.pattern.format(data_len), data_bytes)
         (self.event,
          self.status,
          self.conn_handle,

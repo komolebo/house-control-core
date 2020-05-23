@@ -265,7 +265,7 @@ class StateOadSetControl(State):
 
         elif hci_msg_rx.get_event() == Event.ATT_HandleValueNotification:
             print('receive ATT_HandleValueNotification')
-            msg_data = RxMsgAttHandleValueNotification(hci_msg_rx.data, self.exp_value_len_resp)
+            msg_data = RxMsgAttHandleValueNotification(hci_msg_rx.data)
             valid_resp = self.handle_ack(msg_data)
             # get block size from response
             if self.ctrl_command == OadSettings.OAD_EXT_CTRL_GET_BLK_SZ:
@@ -334,7 +334,7 @@ class StateOadSetMeta(State):
 
         elif hci_msg_rx.get_event() == Event.ATT_HandleValueNotification:
             print('receive ATT_HandleValueNotification in SET_META')
-            msg_data = RxMsgAttHandleValueNotification(hci_msg_rx.data, 1)
+            msg_data = RxMsgAttHandleValueNotification(hci_msg_rx.data)
             valid_resp = self.handle_ack(msg_data)
 
         if valid_resp and self.ack_received():
@@ -378,7 +378,7 @@ class StateOadWriteBlock(State):
             valid_resp = self.handle_ack(msg_data)
 
         elif hci_msg_rx.get_event() == Event.ATT_HandleValueNotification:
-            msg_data = RxMsgAttHandleValueNotification(hci_msg_rx.data, 0x06)
+            msg_data = RxMsgAttHandleValueNotification(hci_msg_rx.data)
             valid_resp = self.handle_ack(msg_data)
 
         if valid_resp and self.ack_received():

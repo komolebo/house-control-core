@@ -1,8 +1,9 @@
 from app.applications.devices.blenet.adjuster import AdjustInterceptHandler
 from app.applications.devices.blenet.establisher import EstablishInterceptHandler
+from app.applications.devices.device_data import DeviceDataHandler
 from app.applications.devices.discovery.indicator import IndicateInterceptHandler
 from app.applications.devices.blenet.initiator import InitInterceptHandler
-from app.applications.devices.blenet.listeners import DisconnectListenHandler
+from app.applications.devices.blenet.listeners import DisconnectListenHandler, NotifyListenHandler
 from app.applications.devices.blenet.resetter import ResetInterceptHandler
 from app.applications.devices.blenet.scanner import ScanInterceptHandler
 from app.applications.devices.blenet.terminator import TerminateInterceptHandler
@@ -24,16 +25,21 @@ class DeviceManager:
         self.data_sender = lambda data: self.npi.send_binary_data(data)
         self.npi_interceptor = None
         self.disc_manager = DiscoveryManager()
+        self.device_data_handler = DeviceDataHandler(self.disc_manager, self.send_response)
 
     def process_npi_msg(self, npi_msg):
         if self.npi_interceptor:
             self.npi_interceptor.process_incoming_npi_msg(npi_msg)
         # listeners task place
         DisconnectListenHandler.listen(npi_msg, self.send_response)
+        NotifyListenHandler.listen(npi_msg, self.send_response, self.data_sender)
 
     def send_response(self, msg=None, data=None):
         self.npi_interceptor = None
         Dispatcher.send_msg(msg, data)
+
+    def handle_device_data_change(self, conn_handle, value, handle):
+        pass
 
 
 class DeviceApp(AppThread, DeviceManager):
@@ -44,6 +50,11 @@ class DeviceApp(AppThread, DeviceManager):
     def on_message(self, msg, data):
         if msg is Messages.NPI_RX_MSG:
             self.process_npi_msg(data["data"])
+
+        elif msg is Messages.DEV_DATA_CHANGE:
+            self.device_data_handler.process_data_change(conn_handle=data["conn_handle"],
+                                                         handle=data["handle"],
+                                                         value=data["value"])
 
 # ------ CENTRAL setup procedures ---------------------------------------------------------
         elif msg is Messages.CENTRAL_RESET:
@@ -58,7 +69,7 @@ class DeviceApp(AppThread, DeviceManager):
             self.npi_interceptor = AdjustInterceptHandler(self.data_sender, self.send_response)
             self.npi_interceptor.start()
 
-#------ Do here mutually exclusive procedures ----------------------------------------------
+#------ Do here mutually exclusive GATT procedures -----------------------------------------
         elif msg is Messages.OAD_START:
             if self.npi_interceptor:
                 Dispatcher.send_msg(Messages.OAD_COMPLETE, {"status": RespCode.BUSY})
@@ -82,7 +93,8 @@ class DeviceApp(AppThread, DeviceManager):
                 Dispatcher.send_msg(Messages.ESTABLISH_CONN_RESP, {"conn_handle": 0xFFFF,
                                                                    "status": RespCode.BUSY,
                                                                    "mac": 0,
-                                                                   "type": None})
+                                                                   "type": None,
+                                                                   "name": None})
             else:
                 self.npi_interceptor = EstablishInterceptHandler(self.data_sender, self.send_response, data)
                 self.npi_interceptor.start()
@@ -91,6 +103,7 @@ class DeviceApp(AppThread, DeviceManager):
         elif msg is Messages.ESTABLISH_CONN_RESP:
             if data["status"] is RespCode.SUCCESS:
                 self.disc_manager.handle_new_conn(data["conn_handle"], data["type"])
+                self.device_data_handler.add_device(data["conn_handle"], data["type"], data["name"])
 
         elif msg is Messages.TERMINATE_CONN:
             if self.npi_interceptor:
