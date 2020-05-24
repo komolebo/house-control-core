@@ -41,9 +41,17 @@ class DeviceData:
 
     def __init__(self, dev_type, name, state=STATE_UNDEFINED, battery_level=100):
         self.dev_type = dev_type
-        self.state = state
-        self.batt_level = battery_level
+        self.__state = state
+        self.__batt_level = battery_level
         self.name = name
+
+    @property
+    def state(self):
+        return self.__state
+
+    @state.setter
+    def state(self, state):
+        self.__state = state
 
     @property
     def batt_level(self):
@@ -62,6 +70,15 @@ class DeviceData:
 class MotionData(DeviceData, TamperData):
     def __init__(self, dev_type, name, state, battery_level):
         DeviceData.__init__(self, dev_type, name, state, battery_level)
+        self.__detect_state = None
+
+    @property
+    def detect_state(self):
+        return self.__detect_state
+
+    @detect_state.setter
+    def detect_state(self, detect_state):
+        self.__detect_state = detect_state
 
 
 class DeviceDataHandler:
@@ -81,11 +98,11 @@ class DeviceDataHandler:
                                data={"conn_handle": conn_handle})
             return
         data_uuid = self.disc_handler.get_uuid_by_handle(conn_handle, handle)
-        if data_uuid == CharUuid.CS_MODE_UUID:
-            pass
-        elif data_uuid == CharUuid.DS_STATE_UUID:
-            pass
-        elif data_uuid == CharUuid.BATTERY_LEVEL_UUID:
+        if data_uuid == CharUuid.CS_MODE.uuid:
+            self.device_info[conn_handle].state = value
+        elif data_uuid == CharUuid.DS_STATE.uuid:
+            self.device_info[conn_handle].detect_state = value
+        elif data_uuid == CharUuid.BATTERY_LEVEL.uuid:
             self.device_info[conn_handle].batt_level = value
-        elif data_uuid == CharUuid.TS_STATE_UUID:
+        elif data_uuid == CharUuid.TS_STATE.uuid:
             self.device_info[conn_handle].tamper_state = value

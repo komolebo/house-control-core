@@ -1,7 +1,7 @@
 from app.applications.devices.blenet.adjuster import AdjustInterceptHandler
 from app.applications.devices.blenet.establisher import EstablishInterceptHandler
 from app.applications.devices.device_data import DeviceDataHandler
-from app.applications.devices.discovery.indicator import IndicateInterceptHandler
+from app.applications.devices.discovery.indicator import CfgDiscInterceptHandler
 from app.applications.devices.blenet.initiator import InitInterceptHandler
 from app.applications.devices.blenet.listeners import DisconnectListenHandler, NotifyListenHandler
 from app.applications.devices.blenet.resetter import ResetInterceptHandler
@@ -10,6 +10,7 @@ from app.applications.devices.blenet.terminator import TerminateInterceptHandler
 from app.applications.devices.discovery.chars import CharDiscInterceptHandler
 from app.applications.devices.discovery.discovery import DiscoveryManager
 from app.applications.devices.discovery.svc import SvcDiscInterceptHandler
+from app.applications.devices.discovery.values import ValDiscInterceptHandler
 from app.applications.devices.oad.oad_handler import OadInterceptHandler
 from app.applications.devices.profiles.profile_uuid import CharUuid
 from app.applications.npi.npi_manager import NpiManager
@@ -69,6 +70,7 @@ class DeviceApp(AppThread, DeviceManager):
             self.npi_interceptor = AdjustInterceptHandler(self.data_sender, self.send_response)
             self.npi_interceptor.start()
 
+#-------------------------------------------------------------------------------------------
 #------ Do here mutually exclusive GATT procedures -----------------------------------------
         elif msg is Messages.OAD_START:
             if self.npi_interceptor:
@@ -114,6 +116,7 @@ class DeviceApp(AppThread, DeviceManager):
                                                                  data["conn_handle"])
                 self.npi_interceptor.start()
 
+#------- Discovery section -----------------------------------------------------------------
         elif msg is Messages.DEV_SVC_DISCOVER:
             if self.npi_interceptor:
                 Dispatcher.send_msg(Messages.DEV_SVC_DISCOVER_RESP, {"status": RespCode.BUSY,
@@ -142,19 +145,27 @@ class DeviceApp(AppThread, DeviceManager):
             if data["status"] == RespCode.SUCCESS:
                 self.disc_manager.handle_char_report(data["conn_handle"], data["chars"])
 
-        elif msg is Messages.ENABLE_DEV_IND:
+        elif msg is Messages.ENABLE_DEV_INDICATION:
             if self.npi_interceptor:
                 Dispatcher.send_msg(Messages.ENABLE_DEV_IND_RESP, {"status": RespCode.BUSY,
                                                                    "conn_handle": data["conn_handle"]})
             else:
-                self.npi_interceptor = IndicateInterceptHandler(self.data_sender,
-                                                                self.send_response,
-                                                                data["conn_handle"],
-                                                                self.disc_manager.get_handle_by_uuid(data["conn_handle"],
+                self.npi_interceptor = CfgDiscInterceptHandler(self.data_sender,
+                                                               self.send_response,
+                                                               data["conn_handle"],
+                                                               self.disc_manager.get_handle_by_uuid(data["conn_handle"],
                                                                                                 CharUuid.GATT_CCC_UUID))
                 self.npi_interceptor.start()
         elif msg is Messages.ENABLE_DEV_IND_RESP:
             if data["status"] == RespCode.SUCCESS:
                 self.disc_manager.handle_ccc_enabled(data["conn_handle"])
-
+        elif msg is Messages.DEV_VALUES_DISCOVER:
+            if self.npi_interceptor:
+                Dispatcher.send_msg(Messages.DEV_VALUES_DISCOVER_RESP, {"status": RespCode.BUSY,
+                                                                        "conn_handle": data["conn_handle"],
+                                                                        "char_value_data": []})
+            else:
+                self.npi_interceptor = ValDiscInterceptHandler(self.data_sender, self.send_response, self.disc_manager,
+                                                               data["conn_handle"])
+                self.npi_interceptor.start()
 #------------------------------------------------------------------------------------------

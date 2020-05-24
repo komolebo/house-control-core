@@ -107,10 +107,18 @@ class Subscriptions:
             MBox.DEV
             # TODO: front
         ],
-        Messages.ENABLE_DEV_IND: [
+        Messages.ENABLE_DEV_INDICATION: [
             MBox.DEV
         ],
         Messages.ENABLE_DEV_IND_RESP: [
+            MBox.DEV,
+            # TODO: front
+        ],
+        Messages.DEV_VALUES_DISCOVER: [
+            MBox.DEV,
+            # TODO: front
+        ],
+        Messages.DEV_VALUES_DISCOVER_RESP: [
             MBox.DEV,
             # TODO: front
         ],
@@ -137,6 +145,10 @@ class Subscriptions:
 
 # Errors section
         Messages.ERR_DEV_MISSING_SVC: [
+            MBox.DEV
+            # TODO: front
+        ],
+        Messages.ERR_DEV_MISSING_CHAR: [
             MBox.DEV
             # TODO: front
         ],
@@ -178,11 +190,14 @@ class Validation:
         Messages.DEV_SVC_DISCOVER_RESP: ["conn_handle", "services", "status"],
         Messages.DEV_CHAR_DISCOVER: ["conn_handle"],
         Messages.DEV_CHAR_DISCOVER_RESP: ["conn_handle", "chars", "status"],
-        Messages.ENABLE_DEV_IND: ["conn_handle"],
+        Messages.DEV_VALUES_DISCOVER: ["conn_handle"],
+        Messages.DEV_VALUES_DISCOVER_RESP: ["conn_handle", "char_value_data", "status"],
+        Messages.ENABLE_DEV_INDICATION: ["conn_handle"],
         Messages.ENABLE_DEV_IND_RESP: ["conn_handle", "status"],
         Messages.DEV_DATA_CHANGE: ["conn_handle", "handle", "value"],
         Messages.DEV_DATA_CHANGE_RESP: ["status"],
         Messages.ERR_DEV_MISSING_SVC: ["conn_handle"],
+        Messages.ERR_DEV_MISSING_CHAR: ["conn_handle"],
         Messages.ERR_DEV_CONN_NOT_EXIST: ["conn_handle"]
     }
 

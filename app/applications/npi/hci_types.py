@@ -61,6 +61,7 @@ class OpCode:
     GATT_DiscPrimaryServiceByUUID = 0xFD86
     GATT_DiscAllPrimaryServices = 0xFD90
     GATT_DiscAllCharDescs = 0xFD84
+    GATT_ReadMultiCharValues = 0xFD8E
     ATT_FindByTypeValueReq = 0x06
     GAP_UpdateLinkParamReq = 0xFE11
     ATT_DiscAllCharDescs = 0xFD84
@@ -95,6 +96,7 @@ class Event:
     ATT_HandleValueNotification = 0x051B
     ATT_ExecuteWriteRsp = 0x0519
     ATT_ReadByGrpTypeRsp = 0x0511
+    ATT_ReadMultiRsp = 0x050F
     GAP_TerminateLink = 0x0606
 
 
@@ -508,6 +510,33 @@ class TxPackGattDiscoverAllCharsDescs(TxPackBase):
 
 # ------------------------------------------------------------------------
 # Rest HCI handlers
+class TxPackGattReadMultiCharValues(TxPackBase):
+    pattern = '<BHBH{}s'
+
+    def __init__(self, type, op_code, conn_handle, handles):
+        super().__init__()
+        handles_len = len(handles)
+        data_length = Constants.HANDLE_BYTE_LEN + handles_len
+        self.buf_str = struct.pack(self.pattern.format(handles_len),
+                                   type,
+                                   op_code,
+                                   data_length,
+                                   conn_handle,
+                                   handles)
+
+
+class RxMsgAttReadMultiResp:
+    pattern = '<HBHB{}s'
+
+    def __init__(self, data_bytes):
+        data_len = len(data_bytes) - struct.calcsize(self.pattern.format(0))
+        (self.event,
+         self.status,
+         self.conn_handle,
+         self.pdu_len,
+         self.value) = struct.unpack(self.pattern.format(data_len), data_bytes)
+
+
 class RxMsgGapHciExtentionCommandStatus:
     short_pattern = '<HBHB'
     long_pattern = '<HBHBBH'

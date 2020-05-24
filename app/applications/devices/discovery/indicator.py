@@ -7,7 +7,7 @@ from app.applications.npi.hci_types import Event, TxPackWriteCharValue, Type, Op
 from app.middleware.messages import Messages
 
 
-class IndicateInterceptHandler(HciInterceptHandler, HciAckHandler):
+class CfgDiscInterceptHandler(HciInterceptHandler, HciAckHandler):
     def __init__(self, data_sender, complete_cb, conn_handle, ccc_list):
         self.data_sender = data_sender
         self.ext_complete_cb = complete_cb
