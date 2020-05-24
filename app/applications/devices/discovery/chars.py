@@ -1,23 +1,10 @@
+from app.applications.devices.conn_info import CharData
 from app.applications.devices.blenet.ack_handler import HciAckHandler
 from app.applications.devices.hci_handler import HciInterceptHandler
 from app.applications.npi.hci_types import Event, Type, OpCode, Constants, STATUS_SUCCESS, \
     TxPackGattDiscoverAllCharsDescs, \
     RxMsgAttFindInfoRsp
 from app.middleware.messages import Messages
-
-
-class CharData:
-    def __init__(self, handle, uuid, byte_format=True):
-        if byte_format:
-            self.handle = int.from_bytes(handle, byteorder="little")
-            if len(uuid) == Constants.UUID_16BIT_IN_BYTES:
-                self.uuid = int.from_bytes(uuid, byteorder="little")
-            else:
-                # just keep as 16 byte array
-                self.uuid = uuid
-        else:
-            self.handle = handle
-            self.uuid = uuid
 
 
 class CharDiscInterceptHandler(HciInterceptHandler, HciAckHandler):

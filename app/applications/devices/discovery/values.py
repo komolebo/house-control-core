@@ -1,19 +1,13 @@
 import struct
 
 from app.applications.devices.blenet.ack_handler import HciAckHandler
-from app.applications.devices.discovery.chars import CharData
+from app.applications.devices.conn_info import CharValueData
 from app.applications.devices.hci_handler import HciInterceptHandler
 from app.applications.devices.profiles.profile_data import ProfileTable
 from app.applications.devices.profiles.profile_uuid import CharUuid
 from app.applications.npi.hci_types import Event, Type, OpCode, \
     TxPackGattReadMultiCharValues, RxMsgAttReadMultiResp, STATUS_SUCCESS
 from app.middleware.messages import Messages
-
-
-class CharValueData(CharData):
-    def __init__(self, handle, uuid, value):
-        super().__init__(handle, uuid, byte_format=False)
-        self.value = value
 
 
 class ValDiscInterceptHandler(HciInterceptHandler, HciAckHandler):

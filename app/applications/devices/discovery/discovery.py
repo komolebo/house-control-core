@@ -1,4 +1,4 @@
-from app.applications.devices.device_data import DeviceConnData
+from app.applications.devices.conn_info import DeviceConnData
 from app.applications.devices.profiles.profile_data import ProfileTable
 from app.applications.devices.profiles.profile_uuid import CharUuid
 from app.middleware.dispatcher import Dispatcher

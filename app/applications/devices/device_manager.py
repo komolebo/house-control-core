@@ -168,4 +168,6 @@ class DeviceApp(AppThread, DeviceManager):
                 self.npi_interceptor = ValDiscInterceptHandler(self.data_sender, self.send_response, self.disc_manager,
                                                                data["conn_handle"])
                 self.npi_interceptor.start()
+        elif msg is Messages.DEV_VALUES_DISCOVER_RESP:
+            self.device_data_handler.process_val_disc_resp(data["conn_handle"], data["char_value_data"])
 #------------------------------------------------------------------------------------------
