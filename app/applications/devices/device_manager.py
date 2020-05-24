@@ -1,16 +1,17 @@
-from app.applications.devices.blenet.adjuster import AdjustInterceptHandler
-from app.applications.devices.blenet.establisher import EstablishInterceptHandler
+from app.applications.devices.interceptors.adjuster import AdjustInterceptHandler
+from app.applications.devices.interceptors.establisher import EstablishInterceptHandler
+from app.applications.devices.interceptors.writer import WriteInterceptHandler
 from app.applications.devices.device_data import DeviceDataHandler
 from app.applications.devices.discovery.indicator import CfgDiscInterceptHandler
-from app.applications.devices.blenet.initiator import InitInterceptHandler
-from app.applications.devices.blenet.listeners import DisconnectListenHandler, NotifyListenHandler
-from app.applications.devices.blenet.resetter import ResetInterceptHandler
-from app.applications.devices.blenet.scanner import ScanInterceptHandler
-from app.applications.devices.blenet.terminator import TerminateInterceptHandler
-from app.applications.devices.discovery.chars import CharDiscInterceptHandler
+from app.applications.devices.interceptors.initiator import InitInterceptHandler
+from app.applications.devices.interceptors.listeners import DisconnectListenHandler, NotifyListenHandler
+from app.applications.devices.interceptors.resetter import ResetInterceptHandler
+from app.applications.devices.interceptors.scanner import ScanInterceptHandler
+from app.applications.devices.interceptors.terminator import TerminateInterceptHandler
+from app.applications.devices.discovery.char_disc import CharDiscInterceptHandler
 from app.applications.devices.discovery.discovery import DiscoveryManager
-from app.applications.devices.discovery.svc import SvcDiscInterceptHandler
-from app.applications.devices.discovery.values import ValDiscInterceptHandler
+from app.applications.devices.discovery.svc_disc import SvcDiscInterceptHandler
+from app.applications.devices.discovery.value_disc import ValDiscInterceptHandler
 from app.applications.devices.oad.oad_handler import OadInterceptHandler
 from app.applications.devices.profiles.profile_uuid import CharUuid
 from app.applications.npi.npi_manager import NpiManager
@@ -80,6 +81,17 @@ class DeviceApp(AppThread, DeviceManager):
                 self.npi_interceptor.start()
         elif msg is Messages.OAD_ABORT:
             self.npi_interceptor.abort()
+
+        elif msg is Messages.DEV_WRITE_CHAR_VAL:
+            if self.npi_interceptor:
+                Dispatcher.send_msg(Messages.DEV_WRITE_CHAR_VAL_RESP, {"status": RespCode.BUSY,
+                                                                       "conn_handle": None,
+                                                                       "handle": None,
+                                                                       "value": None})
+            else:
+                self.npi_interceptor = WriteInterceptHandler(self.data_sender, self.send_response,
+                                                             data["conn_handle"], data["handle"], data["value"])
+                self.npi_interceptor.start()
 
         elif msg is Messages.SCAN_DEVICE:
             if self.npi_interceptor:

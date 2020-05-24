@@ -130,6 +130,13 @@ class Subscriptions:
         Messages.DEV_DATA_CHANGE_RESP: [  # TODO: not sure if needed
             MBox.DEV
         ],
+        Messages.DEV_WRITE_CHAR_VAL: [
+            MBox.DEV
+        ],
+        Messages.DEV_WRITE_CHAR_VAL_RESP: [
+            MBox.DEV
+            # TODO: front
+        ],
 
 # Terminate connection section
         Messages.TERMINATE_CONN: [
@@ -196,6 +203,8 @@ class Validation:
         Messages.ENABLE_DEV_IND_RESP: ["conn_handle", "status"],
         Messages.DEV_DATA_CHANGE: ["conn_handle", "handle", "value"],
         Messages.DEV_DATA_CHANGE_RESP: ["status"],
+        Messages.DEV_WRITE_CHAR_VAL: ["conn_handle", "handle", "value"],
+        Messages.DEV_WRITE_CHAR_VAL_RESP: ["conn_handle", "handle", "value", "status"],
         Messages.ERR_DEV_MISSING_SVC: ["conn_handle"],
         Messages.ERR_DEV_MISSING_CHAR: ["conn_handle"],
         Messages.ERR_DEV_CONN_NOT_EXIST: ["conn_handle"]

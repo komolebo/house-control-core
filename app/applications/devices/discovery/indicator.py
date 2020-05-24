@@ -1,7 +1,5 @@
-from time import sleep
-
-from app.applications.devices.blenet.ack_handler import HciAckHandler
-from app.applications.devices.hci_handler import HciInterceptHandler
+from app.applications.devices.interceptors.ack_handler import HciAckHandler
+from app.applications.devices.interceptors.hci_handler import HciInterceptHandler
 from app.applications.npi.hci_types import Event, TxPackWriteCharValue, Type, OpCode, Constants, RxMsgAttWriteRsp, \
     STATUS_SUCCESS
 from app.middleware.messages import Messages
@@ -24,7 +22,7 @@ class CfgDiscInterceptHandler(HciInterceptHandler, HciAckHandler):
                                           OpCode.GATT_WriteCharValue,
                                           self.conn_handle,
                                           ccc,
-                                          Constants.ENABLE_NOTIFICATION)
+                                          Constants.ENABLE_NOTIFICATION.to_bytes(2, byteorder='little'))
             self.data_sender(tx_msg.buf_str)
 
     def start(self):

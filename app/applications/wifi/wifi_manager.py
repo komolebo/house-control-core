@@ -27,6 +27,11 @@ class WifiManager(AppThread):
                                                               'type': "motion",
                                                               'name': "motion1"})
 
+
+            if count == 4:
+                Dispatcher.send_msg(Messages.DEV_WRITE_CHAR_VAL, {"conn_handle": 0,
+                                                                  "handle": 0x0014,
+                                                                  "value": bytearray([0x01])})
             # if count == 4:
             #     Dispatcher.send_msg(Messages.DEV_SVC_DISCOVER, {"conn_handle": 0})
             # if count == 6:

@@ -317,15 +317,15 @@ class RxMsgGapInitConnect:
 # ------------------------------------------------------------------------
 # Write char value handlers
 class TxPackWriteCharValue(TxPackBase):
-    pattern = '<BHBHHH'
-    LEN = 0x06
+    pattern = '<BHBHH{}s'
 
     def __init__(self, type, op_code, conn_handle, handle, value):
         super().__init__()
-        self.buf_str = struct.pack(self.pattern,
+        length = len(value) + 2 * Constants.HANDLE_BYTE_LEN
+        self.buf_str = struct.pack(self.pattern.format(len(value)),
                                    type,
                                    op_code,
-                                   self.LEN,
+                                   length,
                                    conn_handle,
                                    handle,
                                    value)

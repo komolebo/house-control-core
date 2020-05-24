@@ -1,4 +1,4 @@
-from app.applications.devices.hci_handler import HciInterceptHandler
+from app.applications.devices.interceptors.hci_handler import HciInterceptHandler
 from app.applications.devices.oad.oad_fsm import OadFsm
 from app.applications.npi.hci_types import STATUS_SUCCESS
 from app.middleware.messages import Messages

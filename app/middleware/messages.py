@@ -65,4 +65,6 @@ class Messages(AbstractNamedEnumsInClass):
     DEV_DATA_CHANGE = create_id()
     DEV_DATA_CHANGE_RESP = create_id()
 
+    DEV_WRITE_CHAR_VAL = create_id()
+    DEV_WRITE_CHAR_VAL_RESP = create_id()
 
