@@ -14,7 +14,7 @@ class WifiManager(AppThread):
         while True:
             sleep(6)
             print("awakened")
-            send_notification_to_front(Notifications.SENSOR_LIST_CHANGED, {1: "1", 2: "2"})
+            # send_notification_to_front(Notifications.SENSOR_LIST_CHANGED, {1: "1", 2: "2"})
 
             if count == 0:
                 Dispatcher.send_msg(Messages.CENTRAL_RESET, {})

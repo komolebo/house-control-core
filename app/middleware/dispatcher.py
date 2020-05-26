@@ -77,7 +77,7 @@ class Subscriptions:
             MBox.DEV
         ],
         Messages.SCAN_DEVICE_RESP: [
-            # TODO: front
+            MBox.FRONT
         ],
 
 # Establish connection section
@@ -88,8 +88,8 @@ class Subscriptions:
             MBox.DEV
         ],
         Messages.ESTABLISH_CONN_RESP: [
-            MBox.DEV
-            # TODO: front
+            MBox.DEV,
+            MBox.FRONT
         ],
 
 # Discovery section
@@ -104,28 +104,29 @@ class Subscriptions:
             MBox.DEV
         ],
         Messages.DEV_CHAR_DISCOVER_RESP: [
-            MBox.DEV
-            # TODO: front
+            MBox.DEV,
+            MBox.FRONT
         ],
         Messages.ENABLE_DEV_INDICATION: [
             MBox.DEV
         ],
         Messages.ENABLE_DEV_IND_RESP: [
             MBox.DEV,
-            # TODO: front
+            MBox.FRONT
         ],
         Messages.DEV_VALUES_DISCOVER: [
             MBox.DEV,
-            # TODO: front
+            MBox.FRONT
         ],
         Messages.DEV_VALUES_DISCOVER_RESP: [
             MBox.DEV,
-            # TODO: front
+            MBox.FRONT
         ],
 
 # Data change section
         Messages.DEV_DATA_CHANGE: [
-            MBox.DEV
+            MBox.DEV,
+            MBox.FRONT
         ],
         Messages.DEV_DATA_CHANGE_RESP: [  # TODO: not sure if needed
             MBox.DEV
@@ -134,8 +135,8 @@ class Subscriptions:
             MBox.DEV
         ],
         Messages.DEV_WRITE_CHAR_VAL_RESP: [
-            MBox.DEV
-            # TODO: front
+            MBox.DEV,
+            MBox.FRONT
         ],
 
 # Terminate connection section
@@ -143,25 +144,25 @@ class Subscriptions:
             MBox.DEV
         ],
         Messages.TERMINATE_CONN_RESP: [
-            # TODO: front
+            MBox.FRONT
         ],
         Messages.DEVICE_DISCONN: [
-            MBox.DEV
-            # TODO: front
+            MBox.DEV,
+            MBox.FRONT
         ],
 
 # Errors section
         Messages.ERR_DEV_MISSING_SVC: [
-            MBox.DEV
-            # TODO: front
+            MBox.DEV,
+            MBox.FRONT
         ],
         Messages.ERR_DEV_MISSING_CHAR: [
-            MBox.DEV
-            # TODO: front
+            MBox.DEV,
+            MBox.FRONT
         ],
         Messages.ERR_DEV_CONN_NOT_EXIST: [
             MBox.DEV,
-            # TODO: front
+            MBox.FRONT
         ]
     }
 

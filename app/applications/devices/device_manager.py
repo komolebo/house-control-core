@@ -9,7 +9,7 @@ from app.applications.devices.interceptors.resetter import ResetInterceptHandler
 from app.applications.devices.interceptors.scanner import ScanInterceptHandler
 from app.applications.devices.interceptors.terminator import TerminateInterceptHandler
 from app.applications.devices.discovery.char_disc import CharDiscInterceptHandler
-from app.applications.devices.discovery.discovery import DiscoveryManager
+from app.applications.devices.discovery.discovery import DiscoveryManager, DiscoveryHandler
 from app.applications.devices.discovery.svc_disc import SvcDiscInterceptHandler
 from app.applications.devices.discovery.value_disc import ValDiscInterceptHandler
 from app.applications.devices.oad.oad_handler import OadInterceptHandler
@@ -27,7 +27,8 @@ class DeviceManager:
         self.data_sender = lambda data: self.npi.send_binary_data(data)
         self.npi_interceptor = None
         self.disc_manager = DiscoveryManager()
-        self.device_data_handler = DeviceDataHandler(self.disc_manager, self.send_response)
+        self.disc_handler = DiscoveryHandler()
+        self.device_data_handler = DeviceDataHandler(self.disc_handler, self.send_response)
 
     def process_npi_msg(self, npi_msg):
         if self.npi_interceptor:
@@ -162,11 +163,11 @@ class DeviceApp(AppThread, DeviceManager):
                 Dispatcher.send_msg(Messages.ENABLE_DEV_IND_RESP, {"status": RespCode.BUSY,
                                                                    "conn_handle": data["conn_handle"]})
             else:
+                ccc_list = self.disc_handler.get_handle_by_uuid(data["conn_handle"],CharUuid.GATT_CCC_UUID)
                 self.npi_interceptor = CfgDiscInterceptHandler(self.data_sender,
                                                                self.send_response,
                                                                data["conn_handle"],
-                                                               self.disc_manager.get_handle_by_uuid(data["conn_handle"],
-                                                                                                CharUuid.GATT_CCC_UUID))
+                                                               ccc_list)
                 self.npi_interceptor.start()
         elif msg is Messages.ENABLE_DEV_IND_RESP:
             if data["status"] == RespCode.SUCCESS:
@@ -177,7 +178,7 @@ class DeviceApp(AppThread, DeviceManager):
                                                                         "conn_handle": data["conn_handle"],
                                                                         "char_value_data": []})
             else:
-                self.npi_interceptor = ValDiscInterceptHandler(self.data_sender, self.send_response, self.disc_manager,
+                self.npi_interceptor = ValDiscInterceptHandler(self.data_sender, self.send_response, self.disc_handler,
                                                                data["conn_handle"])
                 self.npi_interceptor.start()
         elif msg is Messages.DEV_VALUES_DISCOVER_RESP:

@@ -1,5 +1,6 @@
 from app.applications.devices.conn_info import CharValueData
 from app.applications.devices.profiles.profile_uuid import CharUuid
+from app.applications.frontier.front_update import FrontUpdateHandler
 from app.middleware.messages import Messages
 
 
@@ -90,10 +91,14 @@ class MotionData(DeviceData, TamperData):
 
 
 class DeviceDataHandler:
-    def __init__(self, disc_handler, send_response):
-        self.disc_handler = disc_handler
-        self.send_response = send_response
-        self.device_info = {}
+    def __new__(cls, disc_handler, send_response):  # singleton class
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(DeviceDataHandler, cls).__new__(cls)
+            cls.disc_handler = disc_handler
+            cls.send_response = send_response
+            cls.frontNotifier = FrontUpdateHandler()
+            cls.device_info = {}
+        return cls.instance
 
     def add_device(self, conn_handle, dev_type, name):
         if conn_handle in self.device_info.keys():
@@ -107,14 +112,18 @@ class DeviceDataHandler:
                                data={"conn_handle": conn_handle})
             return
         data_uuid = self.disc_handler.get_uuid_by_handle(conn_handle, handle)
+        dev_obj = self.device_info[conn_handle]
         if data_uuid == CharUuid.CS_MODE.uuid:
-            self.device_info[conn_handle].state = value
+            dev_obj.state = value
         elif data_uuid == CharUuid.DS_STATE.uuid:
-            self.device_info[conn_handle].detect_state = value
+            dev_obj.detect_state = value
+            self.frontNotifier.handle_dev_notify_status(conn_handle, dev_obj.detect_state)
         elif data_uuid == CharUuid.BATTERY_LEVEL.uuid:
-            self.device_info[conn_handle].batt_level = value
+            dev_obj.batt_level = value
+            self.frontNotifier.handle_dev_notify_battery(conn_handle, dev_obj.batt_level)
         elif data_uuid == CharUuid.TS_STATE.uuid:
-            self.device_info[conn_handle].tamper_state = value
+            dev_obj.tamper_state = value
+            self.frontNotifier.handle_dev_notify_tamper(conn_handle, dev_obj.tamper_state)
         elif data_uuid == CharUuid.DEVICE_NAME:
             # TODO: handle device name
             pass
@@ -127,3 +136,7 @@ class DeviceDataHandler:
         for char_val_item in char_value_data:
             if isinstance(char_val_item, CharValueData):
                 self.process_data_change(conn_handle, char_val_item.handle, char_val_item.value)
+        device = self.device_info[conn_handle]
+        if isinstance(device, MotionData):
+            self.frontNotifier.handle_dev_add_new(conn_handle, device.dev_type, device.state, device.batt_level,
+                                                  device.tamper_state, device.detect_state)
