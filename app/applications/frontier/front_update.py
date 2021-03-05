@@ -1,7 +1,6 @@
 from app.applications.frontier.signals import FrontSignals
 from house_control.events import send_notification_to_front
 
-
 class FrontUpdateHandler:
     def __init__(self):
         # self.disc_handler = DiscoveryHandler()

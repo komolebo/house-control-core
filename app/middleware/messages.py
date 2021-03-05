@@ -68,3 +68,17 @@ class Messages(AbstractNamedEnumsInClass):
     DEV_WRITE_CHAR_VAL = create_id()
     DEV_WRITE_CHAR_VAL_RESP = create_id()
 
+    FRONT_ADD_DEV = create_id()
+    FRONT_ADD_DEV_ACK = create_id()
+
+    FRONT_REM_DEV = create_id()
+    FRONT_REM_DEV_ACK = create_id()
+
+    FRONT_UPD_DEV = create_id()
+    FRONT_UPD_DEV_ACK = create_id()
+
+    FRONT_READ_DEV = create_id()
+    FRONT_READ_DEV_ACK = create_id()
+
+    FRONT_READ_DEV_LIST = create_id()
+    FRONT_READ_DEV_LIST_ACK = create_id()

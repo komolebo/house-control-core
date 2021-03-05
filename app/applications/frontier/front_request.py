@@ -13,9 +13,33 @@ class FrontReqHandler:
                 self.handle_dev_scan_req,
                 []
             ),
+            FrontSignals.DEV_ADD : (
+                lambda data : Dispatcher.send_msg(Messages.FRONT_ADD_DEV, data),
+                [] # todo
+            ),
+            FrontSignals.DEV_READ : (
+                lambda data : Dispatcher.send_msg(Messages.FRONT_READ_DEV, data),
+                [] # todo
+            ),
+            FrontSignals.DEV_UPD : (
+                lambda data : Dispatcher.send_msg(Messages.FRONT_UPD_DEV, data),
+                [] # todo
+            ),
+            FrontSignals.DEV_REM : (
+                lambda data : Dispatcher.send_msg(Messages.FRONT_REM_DEV, data),
+                [] # todo
+            ),
+            FrontSignals.DEV_READ_LIST : (
+                lambda data : Dispatcher.send_msg(Messages.FRONT_READ_DEV_LIST, data),
+                [] # todo
+            ),
 
             FrontSignals.DEV_CONN_REQ: (
-                self.handle_dev_conn_req,
+                lambda data: self.send_event_response(
+                    msg=Messages.ESTABLISH_CONN,
+                    data={'mac': data['mac'],
+                    'type': data['type'],
+                    'name': data['name']}),
                 ["mac", "type", "name"]
             ),
 

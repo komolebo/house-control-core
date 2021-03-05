@@ -14,11 +14,16 @@ from app.applications.devices.discovery.svc_disc import SvcDiscInterceptHandler
 from app.applications.devices.discovery.value_disc import ValDiscInterceptHandler
 from app.applications.devices.oad.oad_handler import OadInterceptHandler
 from app.applications.devices.profiles.profile_uuid import CharUuid
+from app.applications.frontier.front_update import FrontUpdateHandler
+from app.applications.frontier.signals import FrontSignals
 from app.applications.npi.npi_manager import NpiManager
 from app.middleware.dispatcher import Dispatcher
 from app.middleware.messages import Messages
 from app.middleware.nrc import RespCode
 from app.middleware.threads import AppThread
+
+from app.models import models
+from app.models.models import Sensor
 
 
 class DeviceManager:
@@ -58,6 +63,37 @@ class DeviceApp(AppThread, DeviceManager):
             self.device_data_handler.process_data_change(conn_handle=data["conn_handle"],
                                                          handle=data["handle"],
                                                          value=data["value"])
+
+# ------ CRUD operations ------------------------------------------------------------------
+        elif msg is Messages.FRONT_READ_DEV:
+            dev = Sensor.objects.get(mac=data['mac'])
+            FrontUpdateHandler.notify_front(FrontSignals.DEV_READ_RESP, data=dev)
+
+        elif msg is Messages.FRONT_READ_DEV_LIST:
+            dev_lst = Sensor.objects.all()
+            FrontUpdateHandler.notify_front(FrontSignals.DEV_READ_LIST_RESP, data=dev_lst)
+
+        elif msg is Messages.FRONT_ADD_DEV:
+            dev = Sensor(type=data['type'],
+                         name=data['name'],
+                         location=data['location'],
+                         state=data['state'],
+                         mac=data['mac'])
+            dev.save()
+            FrontUpdateHandler.notify_front(FrontSignals.DEV_ADD_ACK, {'mac': data['mac']})
+
+        elif msg is Messages.FRONT_REM_DEV:
+            dev = Sensor.objects.get(mac=data['mac'])
+            dev.delete()
+            FrontUpdateHandler.notify_front(FrontSignals.DEV_REM_ACK, {'data': data['mac']})
+
+        elif msg is Messages.FRONT_UPD_DEV:
+            dev = Sensor.objects.get(mac=data['mac'])
+            dev.location = data['location']
+            dev.state = data['state']
+            dev.name = data['name']
+            dev.save()
+            FrontUpdateHandler.notify_front(FrontSignals.DEV_UPD_ACK, {'data': data['mac']})
 
 # ------ CENTRAL setup procedures ---------------------------------------------------------
         elif msg is Messages.CENTRAL_RESET:

@@ -163,7 +163,18 @@ class Subscriptions:
         Messages.ERR_DEV_CONN_NOT_EXIST: [
             MBox.DEV,
             MBox.FRONT
-        ]
+        ],
+# Device manager <-> Frontier
+        Messages.FRONT_ADD_DEV: [MBox.DEV],
+        Messages.FRONT_ADD_DEV_ACK: [MBox.FRONT],
+        Messages.FRONT_REM_DEV: [MBox.DEV],
+        Messages.FRONT_REM_DEV_ACK: [MBox.FRONT],
+        Messages.FRONT_UPD_DEV: [MBox.DEV],
+        Messages.FRONT_UPD_DEV_ACK: [MBox.FRONT],
+        Messages.FRONT_READ_DEV: [MBox.DEV],
+        Messages.FRONT_READ_DEV_ACK: [MBox.FRONT],
+        Messages.FRONT_READ_DEV_LIST: [MBox.DEV],
+        Messages.FRONT_READ_DEV_LIST_ACK: [MBox.FRONT],
     }
 
 
@@ -208,7 +219,19 @@ class Validation:
         Messages.DEV_WRITE_CHAR_VAL_RESP: ["conn_handle", "handle", "value", "status"],
         Messages.ERR_DEV_MISSING_SVC: ["conn_handle"],
         Messages.ERR_DEV_MISSING_CHAR: ["conn_handle"],
-        Messages.ERR_DEV_CONN_NOT_EXIST: ["conn_handle"]
+        Messages.ERR_DEV_CONN_NOT_EXIST: ["conn_handle"],
+        # TODO:
+        Messages.FRONT_ADD_DEV: [],
+        Messages.FRONT_ADD_DEV_ACK: [],
+        Messages.FRONT_REM_DEV: [],
+        Messages.FRONT_REM_DEV_ACK: [],
+        Messages.FRONT_UPD_DEV: [],
+        Messages.FRONT_UPD_DEV_ACK: [],
+        Messages.FRONT_READ_DEV: [],
+        Messages.FRONT_READ_DEV_ACK: [],
+        Messages.FRONT_READ_DEV_LIST: [],
+        Messages.FRONT_READ_DEV_LIST_ACK: [],
+
     }
 
     @classmethod
