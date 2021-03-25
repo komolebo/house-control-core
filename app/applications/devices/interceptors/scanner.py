@@ -1,3 +1,8 @@
+import base64
+import json
+
+import struct
+
 from app.applications.devices.interceptors.ack_handler import HciAckHandler
 from app.applications.devices.interceptors.hci_handler import HciInterceptHandler
 from app.applications.npi.hci_types import TxPackGapScan, Type, OpCode, Event, STATUS_SUCCESS, RxMsgGapAdvertiserScannerEvent, EventId, Constants
@@ -12,9 +17,12 @@ class ScanSettings:
 
 class ScanData:
     def __init__(self, address, dev_type, rssi):
-        self.address = address
-        self.dev_type = dev_type
+        self.type = dev_type
         self.rssi = rssi
+        self.mac = str(bytes(address).hex())
+
+    def to_json(self):
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
 
 class ScanFilter:
@@ -85,33 +93,33 @@ class ScanInterceptHandler(HciInterceptHandler, HciAckHandler):
 
     def process_advertisement(self, adv_scan_msg):
         if adv_scan_msg.status == STATUS_SUCCESS:
-            addr = adv_scan_msg.address
             data = adv_scan_msg.data
-            # TODO: parse here data to select its device type
-            tx_power = adv_scan_msg.tx_power
 
+            # TODO: parse here data to select its device type
             (reported_services, device_type) = ScanFilter.decode_advert_data(data)
-            print("reported data: {0}, {1}".format(reported_services, device_type))
+            # print("reported data: {0}, {1}".format(reported_services, device_type))
             if ScanFilter.scanned_device_approved(reported_services, device_type):
-                scan_data = ScanData(address=addr,
-                                     dev_type="generic",
-                                     rssi=tx_power)
+                scan_data = ScanData(address=adv_scan_msg.address,
+                                     dev_type=device_type,
+                                     rssi=adv_scan_msg.rssi)
                 self.scan_list.append(scan_data)
 
     def process_incoming_npi_msg(self, hci_msg_rx):
+        valid_resp = False
+
         # Assume scan request is sent, collect response
-        valid_resp = self.handle_ack(hci_msg_rx)
+        self.handle_ack(hci_msg_rx)
 
         if self.ack_received():
         # if not all ACK received
             if hci_msg_rx.get_event() == Event.GAP_AdvertiserScannerEvent:
                 msg_data = RxMsgGapAdvertiserScannerEvent(hci_msg_rx.data)
                 if msg_data.status == STATUS_SUCCESS:
-                    if msg_data.event_id == EventId.GAP_EVT_ADV_REPORT:
+                    if msg_data.event_id in (EventId.GAP_EVT_ADV_REPORT, EventId.GAP_EVT_SCAN_DISABLED):
                         valid_resp = True
 
         # ACK received and current response is not a previous ACK
-        if not valid_resp and not len(self.ack_list):
+        if valid_resp and not len(self.ack_list):
             scan_report_msg_data = RxMsgGapAdvertiserScannerEvent(hci_msg_rx.data)
             if scan_report_msg_data.event_id == EventId.GAP_EVT_ADV_REPORT:
                 self.process_advertisement(scan_report_msg_data)

@@ -1,5 +1,23 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 
+class ScheduleItems:
+    CONN_POLL = 'conn_poll'
+
+
+class Scheduler:
+    scheduler = BackgroundScheduler()
+
+    @classmethod
+    def register_job(cls, _cb, _id, _period_sec):
+        if cls.scheduler.get_job(_id) is not None:
+            raise Exception("Job {} is already running".format(_id))
+        cls.scheduler.add_job(_cb, 'interval', seconds=_period_sec, id=_id)
+        cls.scheduler.start()
+
+    @classmethod
+    def remove_job(cls, _id):
+        cls.scheduler.remove_job(_id)
+
 
 class TimerHandler:
     sched = BackgroundScheduler()

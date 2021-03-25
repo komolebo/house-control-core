@@ -22,16 +22,18 @@ class WifiManager(AppThread):
             # if count == 2:
             #     Dispatcher.send_msg(Messages.SCAN_DEVICE, {})
 
-            if count == 1:
-                Dispatcher.send_msg(Messages.ESTABLISH_CONN, {'mac': [0xD1, 0x35, 0xDA, 0xF2, 0xF8, 0xF0],
-                                                              'type': "motion",
-                                                              'name': "motion1"})
+            # if count == 3:
+            #     Dispatcher.send_msg(Messages.ESTABLISH_CONN, {'mac': [0xD1, 0x35, 0xDA, 0xF2, 0xF8, 0xF0],
+            #                                                   'type': "motion",
+            #                                                   'name': "motion1"})
 
 
-            if count == 4:
-                Dispatcher.send_msg(Messages.DEV_WRITE_CHAR_VAL, {"conn_handle": 0,
-                                                                  "handle": 0x0014,
-                                                                  "value": bytearray([0x01])})
+            # if count == 4:
+            #     Dispatcher.send_msg(Messages.DEV_WRITE_CHAR_VAL, {"conn_handle": 0,
+            #                                                       "handle": 0x0014,
+            #                                                       "value": bytearray([0x01])})
+
+
             # if count == 4:
             #     Dispatcher.send_msg(Messages.DEV_SVC_DISCOVER, {"conn_handle": 0})
             # if count == 6:

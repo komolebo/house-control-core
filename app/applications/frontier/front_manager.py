@@ -5,7 +5,8 @@ from app.middleware.threads import AppThread
 
 
 class FrontManager(FrontUpdateHandler, FrontReqHandler):
-    pass
+    def __init__(self):
+        FrontReqHandler.__init__(self)
 
 
 class FrontierApp(AppThread, FrontManager):
@@ -16,3 +17,6 @@ class FrontierApp(AppThread, FrontManager):
     def on_message(self, msg, data):
         if msg is Messages.DEV_VALUES_DISCOVER_RESP:
             pass
+        elif msg is Messages.FRONT_MSG:
+            self.handle_front_request(data['msg'], data['payload'])
+

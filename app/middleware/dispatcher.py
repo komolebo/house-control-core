@@ -9,12 +9,12 @@ class Subscriptions:
 
         Messages.TEST_MSG: [
             MBox.WIFI,
-            MBox.RF
+            # MBox.RF
         ],
 
         Messages.TEST_MSG2: [
             MBox.WIFI,
-            MBox.RF
+            # MBox.RF
         ],
 
         Messages.SENSOR_REMOVED_FROM_FRONT: [
@@ -70,27 +70,16 @@ class Subscriptions:
         ],
 
 # Scan section
-        Messages.SCAN_DEVICE: [
-            MBox.DEV
-        ],
-        Messages.SCAN_DEVICE_ABORT: [
-            MBox.DEV
-        ],
-        Messages.SCAN_DEVICE_RESP: [
-            MBox.FRONT
-        ],
+        Messages.SCAN_DEVICE: [ MBox.DEV ],
+        Messages.SCAN_DEVICE_ABORT: [ MBox.DEV ],
+        Messages.SCAN_DEVICE_RESP: [ MBox.DEV ],
 
 # Establish connection section
-        Messages.ESTABLISH_CONN: [
-            MBox.DEV
-        ],
-        Messages.ESTABLISH_CONN_ABORT: [
-            MBox.DEV
-        ],
-        Messages.ESTABLISH_CONN_RESP: [
-            MBox.DEV,
-            MBox.FRONT
-        ],
+        Messages.ESTABLISH_CONN: [ MBox.DEV ],
+        Messages.ESTABLISH_CONN_ABORT: [ MBox.DEV ],
+        Messages.ESTABLISH_CONN_RESP: [ MBox.DEV, MBox.FRONT ],
+        Messages.DEV_MTU_CFG: [ MBox.DEV ],
+        Messages.DEV_MTU_CFG_RESP: [ MBox.DEV ],
 
 # Discovery section
         Messages.DEV_SVC_DISCOVER: [
@@ -124,7 +113,7 @@ class Subscriptions:
         ],
 
 # Data change section
-        Messages.DEV_DATA_CHANGE: [
+        Messages.DEV_INDICATION: [
             MBox.DEV,
             MBox.FRONT
         ],
@@ -165,16 +154,17 @@ class Subscriptions:
             MBox.FRONT
         ],
 # Device manager <-> Frontier
-        Messages.FRONT_ADD_DEV: [MBox.DEV],
-        Messages.FRONT_ADD_DEV_ACK: [MBox.FRONT],
-        Messages.FRONT_REM_DEV: [MBox.DEV],
-        Messages.FRONT_REM_DEV_ACK: [MBox.FRONT],
-        Messages.FRONT_UPD_DEV: [MBox.DEV],
-        Messages.FRONT_UPD_DEV_ACK: [MBox.FRONT],
-        Messages.FRONT_READ_DEV: [MBox.DEV],
-        Messages.FRONT_READ_DEV_ACK: [MBox.FRONT],
-        Messages.FRONT_READ_DEV_LIST: [MBox.DEV],
-        Messages.FRONT_READ_DEV_LIST_ACK: [MBox.FRONT],
+        Messages.FRONT_MSG: [MBox.FRONT],
+        Messages.DEV_INFO_ADD: [MBox.DEV],
+        Messages.DEV_INFO_ADD_ACK: [MBox.FRONT],
+        Messages.DEV_INFO_REM: [MBox.DEV],
+        Messages.DEV_INFO_REM_ACK: [MBox.FRONT],
+        Messages.DEV_INFO_UPD: [MBox.DEV],
+        Messages.DEV_INFO_UPD_ACK: [MBox.FRONT],
+        Messages.DEV_INFO_READ: [MBox.DEV],
+        Messages.DEV_INFO_READ_ACK: [MBox.FRONT],
+        Messages.DEV_INFO_READ_LIST: [MBox.DEV],
+        Messages.DEV_INFO_READ_LIST_ACK: [MBox.FRONT],
     }
 
 
@@ -199,9 +189,11 @@ class Validation:
         Messages.SCAN_DEVICE: [],
         Messages.SCAN_DEVICE_ABORT: [],
         Messages.SCAN_DEVICE_RESP: ["data", "status"],
-        Messages.ESTABLISH_CONN: ["mac", "type", "name"],
+        Messages.ESTABLISH_CONN: ["mac", "type", "name", "location"],
         Messages.ESTABLISH_CONN_ABORT: [],
         Messages.ESTABLISH_CONN_RESP: ["conn_handle", "status", "mac", "type", "name"],
+        Messages.DEV_MTU_CFG: ["conn_handle"],
+        Messages.DEV_MTU_CFG_RESP: ["conn_handle", "status"],
         Messages.TERMINATE_CONN: ["conn_handle"],
         Messages.TERMINATE_CONN_RESP: ["status"],
         Messages.DEVICE_DISCONN: ["conn_handle", "reason"],
@@ -213,7 +205,7 @@ class Validation:
         Messages.DEV_VALUES_DISCOVER_RESP: ["conn_handle", "char_value_data", "status"],
         Messages.ENABLE_DEV_INDICATION: ["conn_handle"],
         Messages.ENABLE_DEV_IND_RESP: ["conn_handle", "status"],
-        Messages.DEV_DATA_CHANGE: ["conn_handle", "handle", "value"],
+        Messages.DEV_INDICATION: ["conn_handle", "handle", "value"],
         Messages.DEV_DATA_CHANGE_RESP: ["status"],
         Messages.DEV_WRITE_CHAR_VAL: ["conn_handle", "handle", "value"],
         Messages.DEV_WRITE_CHAR_VAL_RESP: ["conn_handle", "handle", "value", "status"],
@@ -221,16 +213,17 @@ class Validation:
         Messages.ERR_DEV_MISSING_CHAR: ["conn_handle"],
         Messages.ERR_DEV_CONN_NOT_EXIST: ["conn_handle"],
         # TODO:
-        Messages.FRONT_ADD_DEV: [],
-        Messages.FRONT_ADD_DEV_ACK: [],
-        Messages.FRONT_REM_DEV: [],
-        Messages.FRONT_REM_DEV_ACK: [],
-        Messages.FRONT_UPD_DEV: [],
-        Messages.FRONT_UPD_DEV_ACK: [],
-        Messages.FRONT_READ_DEV: [],
-        Messages.FRONT_READ_DEV_ACK: [],
-        Messages.FRONT_READ_DEV_LIST: [],
-        Messages.FRONT_READ_DEV_LIST_ACK: [],
+        Messages.FRONT_MSG: ["msg", "payload"],
+        Messages.DEV_INFO_ADD: ["mac", "location", "name"],
+        Messages.DEV_INFO_ADD_ACK: [],
+        Messages.DEV_INFO_REM: ["mac"],
+        Messages.DEV_INFO_REM_ACK: [],
+        Messages.DEV_INFO_UPD: ["mac"],
+        Messages.DEV_INFO_UPD_ACK: [],
+        Messages.DEV_INFO_READ: ["mac"],
+        Messages.DEV_INFO_READ_ACK: [],
+        Messages.DEV_INFO_READ_LIST: [],
+        Messages.DEV_INFO_READ_LIST_ACK: [],
 
     }
 
@@ -240,7 +233,7 @@ class Validation:
             raise Exception("Message {} type is not dictionary".format(msg_id))
         if msg_id not in cls.validation_info.keys():
             raise Exception("Message {} is not defined in validation".format(msg_id))
-        return set(data).issubset(set(cls.validation_info[msg_id]))
+        return set(cls.validation_info[msg_id]).issubset(set(data))
 
 
 class Dispatcher:
@@ -266,7 +259,7 @@ class Dispatcher:
     def send_msg(cls, msg_id, data):
         if not Validation.is_msg_data_valid(msg_id, data):
             msg_name = Messages.get_name_by_enum_id(msg_id)
-            raise Exception("Message {} is not validated, incorrect keys detected".format(msg_name))
+            raise Exception("Message {} is not validated, incorrect keys detected: {}".format(msg_name, data))
 
         if msg_id in Subscriptions.subscribers_info:
             print(">> " + Messages.get_name_by_enum_id(msg_id) + " : " + str(data))

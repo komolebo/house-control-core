@@ -71,7 +71,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'house_control.wsgi.application'
+# WSGI_APPLICATION = 'house_control.wsgi.application'
 ASGI_APPLICATION = 'house_control.routing.application'
 
 CHANNEL_LAYERS = {

@@ -45,6 +45,9 @@ class Messages(AbstractNamedEnumsInClass):
 
     DEVICE_DISCONN = create_id()
 
+    DEV_MTU_CFG = create_id()
+    DEV_MTU_CFG_RESP = create_id()
+
     DEV_SVC_DISCOVER = create_id()
     DEV_SVC_DISCOVER_RESP = create_id()
 
@@ -62,23 +65,25 @@ class Messages(AbstractNamedEnumsInClass):
     ENABLE_DEV_INDICATION = create_id()
     ENABLE_DEV_IND_RESP = create_id()
 
-    DEV_DATA_CHANGE = create_id()
+    DEV_INDICATION = create_id()
     DEV_DATA_CHANGE_RESP = create_id()
 
     DEV_WRITE_CHAR_VAL = create_id()
     DEV_WRITE_CHAR_VAL_RESP = create_id()
 
-    FRONT_ADD_DEV = create_id()
-    FRONT_ADD_DEV_ACK = create_id()
+    FRONT_MSG = create_id()
 
-    FRONT_REM_DEV = create_id()
-    FRONT_REM_DEV_ACK = create_id()
+    DEV_INFO_ADD = create_id()
+    DEV_INFO_ADD_ACK = create_id()
 
-    FRONT_UPD_DEV = create_id()
-    FRONT_UPD_DEV_ACK = create_id()
+    DEV_INFO_REM = create_id()
+    DEV_INFO_REM_ACK = create_id()
 
-    FRONT_READ_DEV = create_id()
-    FRONT_READ_DEV_ACK = create_id()
+    DEV_INFO_UPD = create_id()
+    DEV_INFO_UPD_ACK = create_id()
 
-    FRONT_READ_DEV_LIST = create_id()
-    FRONT_READ_DEV_LIST_ACK = create_id()
+    DEV_INFO_READ = create_id()
+    DEV_INFO_READ_ACK = create_id()
+
+    DEV_INFO_READ_LIST = create_id()
+    DEV_INFO_READ_LIST_ACK = create_id()

@@ -42,7 +42,7 @@ class NotifyListenHandler(BaseListenAckHandler):
                 data_sender(ack_msg.buf_str)
 
                 # process data
-                complete_cb(msg=Messages.DEV_DATA_CHANGE,
+                complete_cb(msg=Messages.DEV_INDICATION,
                             data={"conn_handle": msg_data.conn_handle,
                                   "handle": msg_data.handle,
                                   "value": msg_data.value})

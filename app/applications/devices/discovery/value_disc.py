@@ -8,6 +8,7 @@ from app.applications.devices.profiles.profile_uuid import CharUuid
 from app.applications.npi.hci_types import Event, Type, OpCode, \
     TxPackGattReadMultiCharValues, RxMsgAttReadMultiResp, STATUS_SUCCESS
 from app.middleware.messages import Messages
+from app.middleware.nrc import RespCode
 
 
 class ValDiscInterceptHandler(HciInterceptHandler, HciAckHandler):
@@ -64,4 +65,5 @@ class ValDiscInterceptHandler(HciInterceptHandler, HciAckHandler):
                     self.handle_multi_char_resp(msg_data)
                     self.complete(msg=Messages.DEV_VALUES_DISCOVER_RESP,
                                   data={"conn_handle": self.conn_handle,
-                                        "char_value_data": self.value_data_list})
+                                        "char_value_data": self.value_data_list,
+                                        "status": RespCode.SUCCESS})

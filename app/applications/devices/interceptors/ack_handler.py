@@ -1,5 +1,5 @@
 from app.applications.npi.hci_types import STATUS_SUCCESS, RxMsgGapHciExtentionCommandStatus, Event, \
-    RxMsgGapTerminateLink
+    RxMsgGapTerminateLink, RxMsgGapHciCommandCompleteEvent
 
 
 class HciAckHandler:
@@ -12,6 +12,11 @@ class HciAckHandler:
                 msg_data = RxMsgGapHciExtentionCommandStatus(hci_msg.data)
                 if msg_data.status == STATUS_SUCCESS:
                     self.ack_list.remove(msg_data.event)
+                    return True
+            elif hci_msg.code == Event.HCI_CommandCompleteEvent:
+                msg_data = RxMsgGapHciCommandCompleteEvent(hci_msg.data)
+                if msg_data.status == STATUS_SUCCESS:
+                    self.ack_list.remove(hci_msg.code)
                     return True
         return False
 

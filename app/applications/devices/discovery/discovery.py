@@ -87,6 +87,10 @@ class DiscoveryManager:
         self.disc_handler.add_conn(conn_handle, dev_type)
 
         # device connected, start discovery
+        Dispatcher.send_msg(Messages.DEV_MTU_CFG, {"conn_handle": conn_handle})
+
+    def handle_mtu_cfg(self, conn_handle):
+        # device connected, start discovery
         Dispatcher.send_msg(Messages.DEV_SVC_DISCOVER, {"conn_handle": conn_handle})
 
     def handle_svc_report(self, conn_handle, svc_list):

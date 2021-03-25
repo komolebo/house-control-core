@@ -1,7 +1,8 @@
-from app.applications.devices.conn_info import CharValueData
-from app.applications.devices.profiles.profile_uuid import CharUuid
-from app.applications.frontier.front_update import FrontUpdateHandler
+from django.forms import model_to_dict
+
+from app.middleware.dispatcher import Dispatcher
 from app.middleware.messages import Messages
+from app.models.models import Sensor
 
 
 class DeviceTypeInfo:
@@ -33,7 +34,7 @@ class TamperData:
         print('Update tamper value', tamper_state)
 
 
-class DeviceData:
+class DeviceProfileData:
     STATE_ENABLED = 0x01
     STATE_DISABLED = 0x00
     STATE_UNDEFINED = 0xFF
@@ -73,9 +74,9 @@ class DeviceData:
         print('Update battery value', batt_level)
 
 
-class MotionData(DeviceData, TamperData):
+class MotionData(DeviceProfileData, TamperData):
     def __init__(self, name, state=None, battery_level=None):
-        DeviceData.__init__(self, DeviceTypeInfo.motion, name, state, battery_level)
+        DeviceProfileData.__init__(self, DeviceTypeInfo.motion, name, state, battery_level)
         self.__detect_state = None
 
     @property
@@ -90,53 +91,79 @@ class MotionData(DeviceData, TamperData):
         print('Update detect value', detect_state)
 
 
-class DeviceDataHandler:
-    def __new__(cls, disc_handler, send_response):  # singleton class
-        if not hasattr(cls, 'instance'):
-            cls.instance = super(DeviceDataHandler, cls).__new__(cls)
-            cls.disc_handler = disc_handler
-            cls.send_response = send_response
-            cls.frontNotifier = FrontUpdateHandler()
-            cls.device_info = {}
-        return cls.instance
+class DevDataHandler:
+    devices = []
 
-    def add_device(self, conn_handle, dev_type, name):
-        if conn_handle in self.device_info.keys():
-            print('Device already added!')
-        if dev_type == DeviceTypeInfo.motion:
-            self.device_info[conn_handle] = MotionData(name)
+    @classmethod
+    def __init__(cls):
+        cls.devices = Sensor.objects.all()
 
-    def process_data_change(self, conn_handle, handle, value):
-        if conn_handle not in self.device_info.keys():
-            self.send_response(msg=Messages.ERR_DEV_CONN_NOT_EXIST,
-                               data={"conn_handle": conn_handle})
-            return
-        data_uuid = self.disc_handler.get_uuid_by_handle(conn_handle, handle)
-        dev_obj = self.device_info[conn_handle]
-        if data_uuid == CharUuid.CS_MODE.uuid:
-            dev_obj.state = value
-        elif data_uuid == CharUuid.DS_STATE.uuid:
-            dev_obj.detect_state = value
-            self.frontNotifier.handle_dev_notify_status(conn_handle, dev_obj.detect_state)
-        elif data_uuid == CharUuid.BATTERY_LEVEL.uuid:
-            dev_obj.batt_level = value
-            self.frontNotifier.handle_dev_notify_battery(conn_handle, dev_obj.batt_level)
-        elif data_uuid == CharUuid.TS_STATE.uuid:
-            dev_obj.tamper_state = value
-            self.frontNotifier.handle_dev_notify_tamper(conn_handle, dev_obj.tamper_state)
-        elif data_uuid == CharUuid.DEVICE_NAME:
-            # TODO: handle device name
-            pass
+    @staticmethod
+    def read_dev(_mac):
+        return model_to_dict(Sensor.objects.get(mac=_mac))
 
-    def process_val_disc_resp(self, conn_handle, char_value_data):
-        if conn_handle not in self.device_info.keys():
-            self.send_response(msg=Messages.ERR_DEV_CONN_NOT_EXIST,
-                               data={"conn_handle": conn_handle})
-            return
-        for char_val_item in char_value_data:
-            if isinstance(char_val_item, CharValueData):
-                self.process_data_change(conn_handle, char_val_item.handle, char_val_item.value)
-        device = self.device_info[conn_handle]
-        if isinstance(device, MotionData):
-            self.frontNotifier.handle_dev_add_new(conn_handle, device.dev_type, device.state, device.batt_level,
-                                                  device.tamper_state, device.detect_state)
+    @classmethod
+    def get_dev(cls, _mac):
+        return next(x for x in cls.devices if x.mac == _mac)
+
+    @classmethod
+    def get_dev_list(cls):
+        return [model_to_dict(x) for x in cls.devices]
+
+    @classmethod
+    def read_all_dev(cls):
+        cls.devices = Sensor.objects.all()
+        return [model_to_dict(x) for x in cls.devices]
+
+    @classmethod
+    def add_dev(cls, _mac, _name, _type, _location):
+        if not Sensor.objects.filter(mac=_mac).exists():
+            dev = Sensor(name = _name,
+                         type = _type,
+                         location = _location,
+                         mac = _mac)
+            dev.save()
+            cls.read_all_dev()
+
+    @classmethod
+    def upd_dev(cls, _mac, _name, _location, _state):
+        dev = Sensor.objects.get(mac=_mac)
+        dev.location =  _location
+        dev.name = _name
+        dev.state = _state
+        dev.save()
+        cls.read_all_dev()
+
+    @classmethod
+    def rem_dev(cls, _mac):
+        filtered = Sensor.objects.filter(mac=_mac)
+        if isinstance(filtered, list):
+            [device.delete() for device in filtered]  # in case of several devices with same MAC
+        else:
+            filtered.delete()
+        cls.read_all_dev()
+
+    @classmethod
+    def upd_dev_tamper(cls, _mac, _tamper):
+        dev = next(x for x in cls.devices if x.mac == _mac)
+        dev.tamper = int.from_bytes(_tamper, byteorder='little') > 0
+        dev.save()
+
+    @classmethod
+    def upd_dev_detection(cls, _mac, _detect):
+        dev = next(x for x in cls.devices if x.mac == _mac)
+        dev.status = int.from_bytes(_detect, byteorder='little') > 0
+        dev.save()
+
+    @classmethod
+    def upd_dev_status(cls, _mac, _state):
+        dev = next(x for x in cls.devices if x.mac == _mac)
+        dev.status = int.from_bytes(_state, byteorder='little') > 0
+        dev.save()
+
+    @classmethod
+    def upd_dev_battery(cls, _mac, _battery):
+        dev = next(x for x in cls.devices if x.mac == _mac)
+        _battery = int.from_bytes(_battery, byteorder='little')
+        dev.battery = 100 if _battery > 100 else _battery
+        dev.save()

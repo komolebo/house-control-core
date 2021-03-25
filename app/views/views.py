@@ -35,7 +35,7 @@ class SensorView(viewsets.ModelViewSet):
     #     pass
 
 
-    def destroy(self, request, *args, **kwargs):
-        sensor_id = self.get_object().id
-        Dispatcher.send_msg(Messages.SENSOR_REMOVED_FROM_FRONT, {"id": sensor_id})
-        return super(SensorView, self).destroy(request, *args, **kwargs)
+    # def destroy(self, request, *args, **kwargs):
+    #     sensor_id = self.get_object().id
+    #     Dispatcher.send_msg(Messages.SENSOR_REMOVED_FROM_FRONT, {"id": sensor_id})
+    #     return super(SensorView, self).destroy(request, *args, **kwargs)

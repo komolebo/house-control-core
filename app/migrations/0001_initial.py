@@ -17,8 +17,8 @@ class Migration(migrations.Migration):
                 ('id', models.IntegerField(primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=120)),
                 ('status', models.BooleanField(default=True)),
-                ('description', models.CharField(max_length=1000)),
-                ('sn', models.CharField(max_length=16)),
+                ('state', models.CharField(max_length=1000)),
+                ('mac', models.CharField(max_length=16)),
             ],
         ),
     ]

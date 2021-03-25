@@ -10,38 +10,42 @@ class FrontReqHandler:
         self.disc_handler = DiscoveryHandler()
         self.req_table = {
             FrontSignals.DEV_SCAN_REQ : (
-                self.handle_dev_scan_req,
+                lambda data : Dispatcher.send_msg(Messages.SCAN_DEVICE, data),
                 []
             ),
-            FrontSignals.DEV_ADD : (
-                lambda data : Dispatcher.send_msg(Messages.FRONT_ADD_DEV, data),
-                [] # todo
+            FrontSignals.DEV_CONN_REQ : (
+                lambda data : Dispatcher.send_msg(Messages.ESTABLISH_CONN, data),
+                []
             ),
+            # FrontSignals.DEV_ADD : (
+            #     lambda data : Dispatcher.send_msg(Messages.DEV_INFO_ADD, data),
+            #     [] # todo
+            # ),
             FrontSignals.DEV_READ : (
-                lambda data : Dispatcher.send_msg(Messages.FRONT_READ_DEV, data),
+                lambda data : Dispatcher.send_msg(Messages.DEV_INFO_READ, data),
                 [] # todo
             ),
             FrontSignals.DEV_UPD : (
-                lambda data : Dispatcher.send_msg(Messages.FRONT_UPD_DEV, data),
+                lambda data : Dispatcher.send_msg(Messages.DEV_INFO_UPD, data),
                 [] # todo
             ),
             FrontSignals.DEV_REM : (
-                lambda data : Dispatcher.send_msg(Messages.FRONT_REM_DEV, data),
+                lambda data : Dispatcher.send_msg(Messages.DEV_INFO_REM, data),
                 [] # todo
             ),
             FrontSignals.DEV_READ_LIST : (
-                lambda data : Dispatcher.send_msg(Messages.FRONT_READ_DEV_LIST, data),
+                lambda data : Dispatcher.send_msg(Messages.DEV_INFO_READ_LIST, data),
                 [] # todo
             ),
 
-            FrontSignals.DEV_CONN_REQ: (
-                lambda data: self.send_event_response(
-                    msg=Messages.ESTABLISH_CONN,
-                    data={'mac': data['mac'],
-                    'type': data['type'],
-                    'name': data['name']}),
-                ["mac", "type", "name"]
-            ),
+            # FrontSignals.DEV_CONN_REQ: (
+            #     lambda data: self.send_event_response(
+            #         msg=Messages.ESTABLISH_CONN,
+            #         data={'mac': data['mac'],
+            #         'type': data['type'],
+            #         'name': data['name']}),
+            #     ["mac", "type", "name"]
+            # ),
 
             FrontSignals.DEV_CHANGE_STATE_REQ: (
                 self.handle_dev_change_state_req,
@@ -59,17 +63,13 @@ class FrontReqHandler:
             )
         }
 
-    def handle_front_request(self, req_data):
-        cmd = 'dev_req'
-        data = {}
-        if cmd in self.req_table.keys():
-            handler, keys = self.req_table[cmd]
-            if set(keys).issubset(set(data.keys())):
-                handler(data)
-
-    def handle_dev_scan_req(self, data):
-        self.send_event_response(msg=Messages.SCAN_DEVICE,
-                                 data={})
+    def handle_front_request(self, msg, payload):
+        if msg in self.req_table.keys():
+            handler, keys = self.req_table[msg]
+            if handler:
+                if not len(keys):# or set(keys).issubset(set(payload.keys())):
+                    # pass
+                    handler(payload)
 
     def handle_dev_conn_req(self, data):
         self.send_event_response(msg=Messages.ESTABLISH_CONN,
@@ -82,7 +82,7 @@ class FrontReqHandler:
         handle = self.disc_handler.get_handle_by_uuid(conn_handle,
                                                       CharUuid.DS_STATE.uuid
                                                       )[0]
-        self.send_event_response(msg=Messages.DEV_DATA_CHANGE,
+        self.send_event_response(msg=Messages.DEV_INDICATION,
                                  data={'conn_handle': conn_handle,
                                        'handle': handle,
                                        'value': data['value']})
@@ -92,7 +92,7 @@ class FrontReqHandler:
         handle = self.disc_handler.get_handle_by_uuid(conn_handle,
                                                       CharUuid.DEVICE_NAME.uuid
                                                       )[0]
-        self.send_event_response(msg=Messages.DEV_DATA_CHANGE,
+        self.send_event_response(msg=Messages.DEV_INDICATION,
                                  data={'conn_handle': conn_handle,
                                        'handle': handle,
                                        'value': data['value']})

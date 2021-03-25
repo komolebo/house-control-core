@@ -39,4 +39,5 @@ class WriteInterceptHandler(HciInterceptHandler, HciAckHandler):
                 self.complete(msg=Messages.DEV_WRITE_CHAR_VAL_RESP,
                               data={"conn_handle": self.conn_handle,
                                     "handle": self.handle,
-                                    "value": self.value})
+                                    "value": self.value,
+                                    "status": STATUS_SUCCESS})

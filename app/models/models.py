@@ -4,9 +4,9 @@ from django.db import models
 # Create your models here.
 class Sensor(models.Model):
     id = models.IntegerField(primary_key=True)
-    type = models.CharField(max_length=20)
+    type = models.CharField(max_length=20, default="undefined")
     name = models.CharField(max_length=120)
-    location = models.CharField(max_length=120)
+    location = models.CharField(max_length=120, default="default")
     state = models.BooleanField(default=False)
     battery = models.IntegerField(default=100)
     tamper = models.BooleanField(default=False)

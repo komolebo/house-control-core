@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterField(
             model_name='sensor',
-            name='sn',
+            name='mac',
             field=models.CharField(max_length=18),
         ),
     ]

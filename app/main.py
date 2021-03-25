@@ -1,5 +1,4 @@
 from app.applications.devices.device_manager import DeviceApp
-from app.applications.devices.devices import DevManager
 from app.applications.frontier.front_manager import FrontierApp
 from app.applications.npi.npi_manager import NpiApp
 from app.middleware.dispatcher import Dispatcher
@@ -30,5 +29,5 @@ def main():
             t.start()
             threads.append(t)
 
-        Dispatcher.send_msg(Messages.TEST_MSG, {"message": "test msg"})
+        Dispatcher.send_msg(Messages.TEST_MSG, {"message": "test msg", "id": 0})
         Dispatcher.send_msg(Messages.NPI_SERIAL_PORT_LISTEN, {})

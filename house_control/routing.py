@@ -4,9 +4,13 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from app import routing
 
 application = ProtocolTypeRouter({
-    'websocket': AuthMiddlewareStack(
-        URLRouter(
-            routing.websocket_urlpatterns
-        )
+    # 'websocket': AuthMiddlewareStack(
+    #     URLRouter(
+    #         routing.websocket_urlpatterns
+    #     )
+    # )
+
+    'websocket': URLRouter(
+        routing.websocket_urlpatterns
     )
 })

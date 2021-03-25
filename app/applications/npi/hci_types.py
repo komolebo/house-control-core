@@ -53,6 +53,7 @@ class EventCode:
 class OpCode:
     # transmit codes
     HCIExt_ResetSystemCmd = 0xFC1D
+    HciLe_SetDataLength = 0x2022
     GapInit_getPhyParam = 0xFE61
     GapScan_enable = 0xFE51
     Gap_DeviceInit = 0xFE00
@@ -73,6 +74,7 @@ class OpCode:
     GAP_TerminateLinkRequest = 0xFE0A
 
 
+
 class EventId:
     GAP_EVT_SCAN_ENABLED = 0x00010000
     GAP_EVT_SCAN_DISABLED = 0x00020000
@@ -82,6 +84,8 @@ class EventId:
 class Event:
     # receive codes
     GAP_HCI_ExtentionCommandStatus = 0x067F
+    HCI_CommandCompleteEvent = 0x000E
+    HCI_LE_GenericReportEvent = 0x003E
     GAP_DeviceInitDone = 0x0600
     HCIExt_ResetSystemCmdDone = 0x041D
     GAP_AdvertiserScannerEvent = 0x0613
@@ -317,11 +321,11 @@ class RxMsgGapInitConnect:
 # ------------------------------------------------------------------------
 # Write char value handlers
 class TxPackWriteCharValue(TxPackBase):
-    pattern = '<BHBHH{}s'
+    pattern = '<BHBHH{0}s'
 
     def __init__(self, type, op_code, conn_handle, handle, value):
         super().__init__()
-        length = len(value) + 2 * Constants.HANDLE_BYTE_LEN
+        length = len(value) + 2 * Constants.HANDLE_BYTE_LEN  # conn_handle + uuid_handle
         self.buf_str = struct.pack(self.pattern.format(len(value)),
                                    type,
                                    op_code,
@@ -423,6 +427,30 @@ class RxMsgAttMtuUpdatedEvt:
          self.pdu_len,
          self.mtu) = fields
 
+class TxPackHciLeSetDataLenReq(TxPackBase):
+    pattern = '<BHBHHH'
+    DATA_LEN = 6
+
+    def __init__(self, type, op_code, conn_handle, tx_octets, tx_time):
+        super().__init__()
+        self.buf_str = struct.pack(self.pattern,
+                                   type,
+                                   op_code,
+                                   self.DATA_LEN,
+                                   conn_handle,
+                                   tx_octets,
+                                   tx_time)
+
+
+class RxMsgHciLeGenericReportEvtRsp:
+    pattern = '<BBH8s'
+
+    def __init__(self, data_bytes):
+        fields = struct.unpack(self.pattern, data_bytes)
+        (self.event,
+         self.status,
+         self.conn_handle,
+         self.features) = fields
 
 # ------------------------------------------------------------------------
 # Handle value notification responses
@@ -536,7 +564,8 @@ class RxMsgAttReadMultiResp:
          self.pdu_len,
          self.value) = struct.unpack(self.pattern.format(data_len), data_bytes)
 
-
+# ---------------------------------------------------------------------------------
+# ACK
 class RxMsgGapHciExtentionCommandStatus:
     short_pattern = '<HBHB'
     long_pattern = '<HBHBBH'
@@ -556,6 +585,16 @@ class RxMsgGapHciExtentionCommandStatus:
              self.param_data) = struct.unpack(self.long_pattern, data_bytes)
 
 
+class RxMsgGapHciCommandCompleteEvent:
+    pattern = '<HBHB'
+
+    def __init__(self, data_bytes):
+        (self.packets,
+         self.op_code,
+         self.status,
+         self.handle) = struct.unpack(self.pattern, data_bytes)
+
+# ---------------------------------------------------------------------------------
 class RxMsgAttReadByGrpTypeRsp:
     short_pattern = '<HBHB'
     long_pattern = '<HBHBB{}s'
