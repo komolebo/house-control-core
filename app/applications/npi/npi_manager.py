@@ -7,7 +7,7 @@ from app.middleware.threads import AppThread
 
 
 class NpiManager:
-    def __init__(self, tty_port='/dev/ttyUSB0'):
+    def __init__(self, tty_port='/dev/ttyUSB1'):
         self.ser = serial.Serial(
             port=tty_port,
             baudrate=115200,

@@ -4,6 +4,8 @@ from app.applications.devices.conn_info import DevConnDataHandler, CharData
 from app.applications.devices.discovery.discovery import DiscoveryHandler
 from app.applications.devices.oad.firmware import FirmwareBin
 from app.applications.devices.profiles.profile_uuid import CharUuid, ServiceUuid
+from app.applications.frontier.front_update import FrontUpdateHandler
+from app.applications.frontier.signals import FrontSignals
 from app.applications.npi.hci_types import OpCode, Type, Event, RxMsgGapHciExtentionCommandStatus, \
     STATUS_SUCCESS, RxMsgAttWriteRsp, TxPackWriteCharValue, TxPackAttExchangeMtuReq, RxMsgAttExchangeMtuRsp, \
     RxMsgAttMtuUpdatedEvt, RxMsgAttHandleValueNotification, TxPackWriteNoRsp, TxPackWriteLongCharValue, \
@@ -198,37 +200,8 @@ class StateOadIdle(State):
         pass
 
 
-class StateOadLinkPrmUpd(State):
-    def __init__(self, fsm):
-        super().__init__(fsm)
-
-        self.set_ack([
-            Event.GAP_HCI_ExtentionCommandStatus,
-            Event.GAP_LinkParamUpdate
-        ])
-
-        print('///////// OAD UPDATE LINK  /////////////')
-        tx_msg = TxPackGapUpdateLinkParam(Type.LinkCtrlCommand,
-                                          OpCode.GAP_UpdateLinkParamReq,
-                                          GOadData.oad_conn_handle,
-                                          0x0006,
-                                          0x0006,
-                                          0,
-                                          0x0032)
-        self.fsm.data_sender(tx_msg.buf_str)
-
-    def on_event(self, hci_msg_rx):
-        self.handle_ack(hci_msg_rx)
-
-        if self.ack_received():
-            self.post_handler()
-
-    def post_handler(self):
-        async_run(self.fsm.transit, params=[StateOadReset], delay=2)
-
-
 class StateOadReset(State):
-    RESET_DELAY = 15  # seconds
+    RESET_DELAY = 3  # seconds
 
     def __init__(self, fsm):
         super().__init__(fsm)
@@ -258,7 +231,7 @@ class StateOadReset(State):
 
     def post_handler(self):
         # wait for device reset
-        async_run(self.fsm.transit, delay=self.RESET_DELAY, params=[StateOadInit, StateOadInit.CONNECT])
+        async_run(self.fsm.transit, delay=self.RESET_DELAY, params=[StateOadInit])
 
 
 class StateOadInit(State):
@@ -266,31 +239,19 @@ class StateOadInit(State):
     SETUP = 1
     LINK_PARAM = 2
 
-    def __init__(self, fsm, mode):
+    def __init__(self, fsm, post_oad=False):
         super().__init__(fsm)
-        self.mode = mode
+        self.mode = self.CONNECT
+        self.is_post_oad = post_oad
+        self.pre_handler()
 
-        if mode is self.CONNECT:
+    def pre_handler(self):
+        if self.mode == self.CONNECT:
             print('///////// OAD CONNECT /////////////')
             self.set_ack([
                 Event.GAP_HCI_ExtentionCommandStatus,
                 Event.GAP_EstablishLink
             ])
-        elif mode is self.SETUP:
-            print('///////// OAD SET LEN /////////////')
-            self.set_ack([
-                Event.HCI_LE_SetDataLength
-            ])
-        # elif mode is self.LINK_PARAM:
-        #     self.set_ack([
-        #         Event.GAP_HCI_ExtentionCommandStatus,
-        #         Event.GAP_LinkParamUpdate
-        #     ])
-
-        self.pre_handler()
-
-    def pre_handler(self):
-        if self.mode == self.CONNECT:
             tx_msg = TxPackGapInitConnect(Type.LinkCtrlCommand,
                                           OpCode.GapInit_connect,
                                           Constants.PEER_ADDRTYPE_PUBLIC_OR_PUBLIC_ID,
@@ -299,11 +260,29 @@ class StateOadInit(State):
                                           timeout=0)
             self.fsm.data_sender(tx_msg.buf_str)
         elif self.mode == self.SETUP:
+            print('///////// OAD SET LEN /////////////')
+            self.set_ack([
+                Event.HCI_LE_SetDataLength
+            ])
             tx_msg = TxPackHciLeSetDataLenReq(Type.LinkCtrlCommand,
                                               OpCode.HciLe_SetDataLength,
                                               GOadData.oad_conn_handle,
                                               0x00FB,
                                               0x0848)
+            self.fsm.data_sender(tx_msg.buf_str)
+        elif self.mode == self.LINK_PARAM:
+            print('///////// OAD LINK PARAM /////////////')
+            self.set_ack([
+                Event.GAP_HCI_ExtentionCommandStatus,
+                Event.GAP_LinkParamUpdate
+            ])
+            tx_msg = TxPackGapUpdateLinkParam(Type.LinkCtrlCommand,
+                                              OpCode.GAP_UpdateLinkParamReq,
+                                              GOadData.oad_conn_handle,
+                                              0x0006,
+                                              0x0006,
+                                              0,
+                                              0x0032)
             self.fsm.data_sender(tx_msg.buf_str)
 
     def on_event(self, hci_msg_rx):
@@ -315,14 +294,18 @@ class StateOadInit(State):
             self.post_handler()
 
     def post_handler(self):
-        # print("post4")
         if self.mode == self.CONNECT:
             print('///////// OAD CONNECT POST /////////////')
-            async_run(self.fsm.transit, params=[StateOadInit, self.SETUP], delay=2)
-            # self.fsm.transit(StateOadInit, self.SETUP)
+            self.mode = self.SETUP
+            self.pre_handler()
         elif self.mode == self.SETUP:
-            async_run(self.fsm.transit, params=[StateOadDiscover, StateOadDiscover.SERVICES], delay=2)
-            # self.fsm.transit(StateOadDiscover, StateOadDiscover.SERVICES)
+            self.mode = self.LINK_PARAM
+            self.pre_handler()
+        elif self.mode == self.LINK_PARAM:
+            if self.is_post_oad:
+                self.fsm.transit(StateOadIdle)
+            else:
+                async_run(self.fsm.transit, params=[StateOadDiscover, StateOadDiscover.SERVICES], delay=1)
 
 
 class StateOadDiscover(State):
@@ -587,10 +570,11 @@ class StateOadSetMeta(State):
 
 class StateOadWriteBlock(State):
     HANDLE_FIELDS_BYTE_LEN = 0x04
-    block_counter = 0
+
 
     def __init__(self, fsm):
         super().__init__(fsm)
+        self.block_counter = 0
         self.pre_handler()
 
     def pre_handler(self):
@@ -603,7 +587,7 @@ class StateOadWriteBlock(State):
 
     def write_block(self):
         print('writing block')
-        block = self.fsm.firmware.get_block(StateOadWriteBlock.block_counter)
+        block = self.fsm.firmware.get_block(self.block_counter)
         tx_msg = TxPackWriteNoRsp(Type.LinkCtrlCommand,
                                   OpCode.GATT_WriteNoRsp,
                                   GOadData.oad_conn_handle,
@@ -618,14 +602,16 @@ class StateOadWriteBlock(State):
             self.post_handler()
 
     def post_handler(self):
-        StateOadWriteBlock.block_counter += 1
+        self.block_counter += 1
+        FrontUpdateHandler.notify_front(FrontSignals.UPDATE_DEV_IN_PROGRESS,
+                                        data={"value": self.block_counter / self.fsm.firmware.get_blocks_number()})
         print('blocks written: ', self.block_counter, '/', self.fsm.firmware.get_blocks_number())
-        if StateOadWriteBlock.block_counter >= self.fsm.firmware.get_blocks_number():
+        if self.block_counter >= self.fsm.firmware.get_blocks_number():
             # switch to next state
             self.fsm.transit(StateOadSetCtrl, StateOadSetCtrl.ENABLE_IMG)
         else:
             # still have blocks to write
-            self.fsm.transit(StateOadWriteBlock)
+            self.pre_handler()
 
 
 class StatePostOad(State):
@@ -650,8 +636,10 @@ class StatePostOad(State):
             self.post_handler()
 
     def post_handler(self):
-        self.fsm.transit(StateOadIdle)
+        print("|||||||||||||| OAD COMPLETE |||||||||||||||||")
         self.fsm.process_complete_cb()
+        # async_run(self.fsm.transit, params=[StateOadInit, True], delay=5)
+        # self.fsm.transit(StateOadInit, param=[True])
 
     def timeout(self):
         # post here an event of OAD failure
@@ -676,4 +664,4 @@ class OadFsm:
         self.state = state_class(self) if param is None else state_class(self, param)
 
     def start(self):
-        self.transit(StateOadLinkPrmUpd)
+        self.transit(StateOadReset)

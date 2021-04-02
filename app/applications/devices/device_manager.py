@@ -4,6 +4,7 @@ from app.applications.devices.device_connection import DevConnManager
 from app.applications.devices.discovery.mtu_cfg import MtuCfgInterceptHandler
 from app.applications.devices.interceptors.adjuster import AdjustInterceptHandler
 from app.applications.devices.interceptors.establisher import EstablishInterceptHandler
+from app.applications.devices.interceptors.linker import LinkParamCfgInterceptHandler
 from app.applications.devices.interceptors.writer import WriteInterceptHandler
 from app.applications.devices.device_data import DevDataHandler
 from app.applications.devices.conn_info import DevConnDataHandler
@@ -117,11 +118,11 @@ class DeviceApp(AppThread, DeviceManager):
 
 # ------ CENTRAL setup procedures ---------------------------------------------------------
         elif msg is Messages.CENTRAL_RESET:
-            self.npi_interceptor = ResetInterceptHandler(self.data_sender, self.send_response)
+            self.npi_interceptor = ResetInterceptHandler(self.data_sender, self.send_response, self.complete_interception)
             self.npi_interceptor.start()
 
         elif msg in (Messages.CENTRAL_INIT, Messages.CENTRAL_RESET_RESP):
-            self.npi_interceptor = InitInterceptHandler(self.data_sender, self.send_response)
+            self.npi_interceptor = InitInterceptHandler(self.data_sender, self.send_response, self.complete_interception)
             self.npi_interceptor.start()
 
         elif msg in (Messages.CENTRAL_ADJUST, Messages.CENTRAL_INIT_RESP):
@@ -146,7 +147,12 @@ class DeviceApp(AppThread, DeviceManager):
             self.npi_interceptor.abort()
 
         elif msg is Messages.OAD_COMPLETE:
+            FrontUpdateHandler.notify_front(FrontSignals.UPDATE_DEV_COMPLETE, data={})
             DevConnManager.start_scanning()
+            if data["status"] is STATUS_SUCCESS:
+                # reconnect device with its existing info
+                dev_data = DevDataHandler.get_dev(data["mac"], _serializable=True)
+                Dispatcher.send_msg(Messages.ESTABLISH_CONN, dev_data)
 
         elif msg is Messages.DEV_WRITE_CHAR_VAL:
             if self.npi_interceptor:
@@ -154,8 +160,9 @@ class DeviceApp(AppThread, DeviceManager):
                                                                        "conn_handle": None,
                                                                        "handle": None,
                                                                        "value": None})
+                print(self.npi_interceptor)
             else:
-                self.npi_interceptor = WriteInterceptHandler(self.data_sender, self.send_response,
+                self.npi_interceptor = WriteInterceptHandler(self.data_sender, self.send_response, self.complete_interception,
                                                              data["conn_handle"], data["handle"], data["value"])
                 self.npi_interceptor.start()
 
@@ -215,6 +222,7 @@ class DeviceApp(AppThread, DeviceManager):
             else:
                 self.npi_interceptor = TerminateInterceptHandler(self.data_sender,
                                                                  self.send_response,
+                                                                 self.complete_interception,
                                                                  data["conn_handle"])
                 self.npi_interceptor.start()
         elif msg is Messages.DEVICE_DISCONN:
@@ -237,6 +245,20 @@ class DeviceApp(AppThread, DeviceManager):
         elif msg is Messages.DEV_MTU_CFG_RESP:
             if data["status"] == RespCode.SUCCESS:
                 self.disc_manager.handle_mtu_cfg(data["conn_handle"])
+
+        elif msg is Messages.DEV_LINK_PARAM_CFG:
+            if self.npi_interceptor:
+                Dispatcher.send_msg(Messages.DEV_LINK_PARAM_CFG_RESP, {"conn_handle": data["conn_handle"],
+                                                                       "status": RespCode.BUSY})
+            else:
+                self.npi_interceptor = LinkParamCfgInterceptHandler(self.data_sender,
+                                                                    self.send_response,
+                                                                    self.complete_interception,
+                                                                    data["conn_handle"])
+                self.npi_interceptor.start()
+        elif msg is Messages.DEV_LINK_PARAM_CFG_RESP:
+            if data["status"] == RespCode.SUCCESS:
+                self.disc_manager.handle_link_param_cfg(data["conn_handle"])
 #------- Discovery section -----------------------------------------------------------------
         elif msg is Messages.DEV_SVC_DISCOVER:
             if self.npi_interceptor:

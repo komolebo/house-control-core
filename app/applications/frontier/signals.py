@@ -35,3 +35,5 @@ class FrontSignals:
 
     UPDATE_DEV = 'update_dev'
     UPDATE_DEV_ABORT = 'update_dev_abort'
+    UPDATE_DEV_IN_PROGRESS = 'update_dev_in_progress'
+    UPDATE_DEV_COMPLETE = 'update_dev_complete'

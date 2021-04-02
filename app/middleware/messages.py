@@ -51,6 +51,9 @@ class Messages(AbstractNamedEnumsInClass):
     DEV_MTU_CFG = create_id()
     DEV_MTU_CFG_RESP = create_id()
 
+    DEV_LINK_PARAM_CFG = create_id()
+    DEV_LINK_PARAM_CFG_RESP = create_id()
+
     DEV_SVC_DISCOVER = create_id()
     DEV_SVC_DISCOVER_RESP = create_id()
 

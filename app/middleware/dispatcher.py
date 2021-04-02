@@ -61,7 +61,7 @@ class Subscriptions:
 # OAD section
         Messages.OAD_START: [ MBox.DEV ],
         Messages.OAD_ABORT: [ MBox.DEV ],
-        Messages.OAD_COMPLETE: [ ],  # TODO: front
+        Messages.OAD_COMPLETE: [ MBox.DEV ],  # TODO: front
 
 # Scan section
         Messages.SEARCH_DEVICES: [ MBox.DEV ],
@@ -77,6 +77,8 @@ class Subscriptions:
         Messages.ESTABLISH_CONN_RESP: [ MBox.DEV, MBox.FRONT],
         Messages.DEV_MTU_CFG: [ MBox.DEV ],
         Messages.DEV_MTU_CFG_RESP: [ MBox.DEV ],
+        Messages.DEV_LINK_PARAM_CFG: [MBox.DEV],
+        Messages.DEV_LINK_PARAM_CFG_RESP: [MBox.DEV],
 
 # Discovery section
         Messages.DEV_SVC_DISCOVER: [
@@ -197,6 +199,8 @@ class Validation:
         Messages.ESTABLISH_CONN_RESP: ["conn_handle", "status", "mac", "type", "name"],
         Messages.DEV_MTU_CFG: ["conn_handle"],
         Messages.DEV_MTU_CFG_RESP: ["conn_handle", "status"],
+        Messages.DEV_LINK_PARAM_CFG: ["conn_handle"],
+        Messages.DEV_LINK_PARAM_CFG_RESP: ["conn_handle", "status"],
         Messages.TERMINATE_CONN: ["conn_handle"],
         Messages.TERMINATE_CONN_RESP: ["status"],
         Messages.DEVICE_DISCONN: ["conn_handle", "reason"],

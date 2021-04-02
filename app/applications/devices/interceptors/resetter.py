@@ -9,8 +9,9 @@ from app.middleware.messages import Messages
 class ResetInterceptHandler(HciInterceptHandler):
     RESET_DELAY_SEC = 0.5
 
-    def __init__(self, data_sender, complete_cb):
+    def __init__(self, data_sender, send_response, complete_cb):
         self.data_sender = data_sender
+        self.send_response = send_response
         self.ext_complete_cb = complete_cb
 
     def start(self):
@@ -19,10 +20,14 @@ class ResetInterceptHandler(HciInterceptHandler):
                                             Constants.CHIP_RESET)
         self.data_sender(tx_msg.buf_str)
 
+    def _complete(self, msg=None, data=None):
+        self.send_response(msg, data)
+        self.ext_complete_cb()
+
     def complete(self, msg=None, data=None):
         # send callback after delay to let Host MCU to reset
         Timer(self.RESET_DELAY_SEC,
-              self.ext_complete_cb, [msg, data]
+              self._complete, [msg, data]
         ).start()
 
     def abort(self):

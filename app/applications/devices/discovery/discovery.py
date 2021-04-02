@@ -90,6 +90,9 @@ class DiscoveryManager:
         Dispatcher.send_msg(Messages.DEV_MTU_CFG, {"conn_handle": conn_handle})
 
     def handle_mtu_cfg(self, conn_handle):
+        Dispatcher.send_msg(Messages.DEV_LINK_PARAM_CFG,  {"conn_handle": conn_handle})
+
+    def handle_link_param_cfg(self, conn_handle):
         # device connected, start discovery
         Dispatcher.send_msg(Messages.DEV_SVC_DISCOVER, {"conn_handle": conn_handle})
 
