@@ -70,10 +70,11 @@ class DeviceApp(AppThread, DeviceManager):
             self.process_npi_msg(data["data"])
 
         elif msg is Messages.DEV_INDICATION:
-            self.dev_indication_handler.process_indication(conn_handle=data["conn_handle"],
+            data_changed = self.dev_indication_handler.process_indication(conn_handle=data["conn_handle"],
                                                            handle=data["handle"],
                                                            value=data["value"])
-            FrontUpdateHandler.notify_front(FrontSignals.DEV_NOTIFY_DATA, data={})
+            if data_changed:
+                FrontUpdateHandler.notify_front(FrontSignals.DEV_NOTIFY_DATA, data={})
 
 # ------ CRUD operations ------------------------------------------------------------------
         if msg is Messages.DEV_INFO_READ:
@@ -107,14 +108,13 @@ class DeviceApp(AppThread, DeviceManager):
             mac = data['mac']
             new_state = data['state']
             sensor_cfg_update = new_state != DevDataHandler.get_dev(mac).state
-            DevDataHandler.upd_dev(mac, _name=data['name'], _location=data['location'], _state=new_state)
+            DevDataHandler.upd_dev(mac, _name=data['name'], _location=data['location'])
             if sensor_cfg_update and DevConnManager.is_mac_active(mac):
                 conn_handle = DevConnDataHandler.get_handle_by_mac(mac)
                 uuid_handle = DiscoveryHandler.get_handle_by_uuid(conn_handle, CharUuid.CS_MODE.uuid)[0]
                 Dispatcher.send_msg(Messages.DEV_WRITE_CHAR_VAL, {'conn_handle': conn_handle,
                                                                   'handle': uuid_handle,
                                                                   'value': bytes([new_state])})
-            FrontUpdateHandler.notify_front(FrontSignals.DEV_UPD_ACK, {'data': mac})
 
 # ------ CENTRAL setup procedures ---------------------------------------------------------
         elif msg is Messages.CENTRAL_RESET:
@@ -143,6 +143,7 @@ class DeviceApp(AppThread, DeviceManager):
                                                            data["mac"], file_path)
                 self.npi_interceptor.start()
                 DevConnManager.stop_scanning()
+                FrontUpdateHandler.notify_front(FrontSignals.UPDATE_DEV_ACK, {'mac': data['mac']})
         elif msg is Messages.OAD_ABORT:
             self.npi_interceptor.abort()
 
@@ -165,6 +166,13 @@ class DeviceApp(AppThread, DeviceManager):
                 self.npi_interceptor = WriteInterceptHandler(self.data_sender, self.send_response, self.complete_interception,
                                                              data["conn_handle"], data["handle"], data["value"])
                 self.npi_interceptor.start()
+        elif msg is Messages.DEV_WRITE_CHAR_VAL_RESP:
+            mac = DevConnDataHandler.get_mac_by_handle(data["conn_handle"])
+
+            if data["status"] is STATUS_SUCCESS:
+                state = data["value"]
+                DevDataHandler.upd_dev_state(mac, state)
+                FrontUpdateHandler.notify_front(FrontSignals.DEV_UPD_ACK, {'data': mac})
 
 # -------------------------------------------------------------------------------------------
 # ------ Connect devices --------------------------------------------------------------------

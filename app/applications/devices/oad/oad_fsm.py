@@ -294,18 +294,17 @@ class StateOadInit(State):
             self.post_handler()
 
     def post_handler(self):
-        if self.mode == self.CONNECT:
-            print('///////// OAD CONNECT POST /////////////')
+        if self.mode is self.CONNECT:
             self.mode = self.SETUP
             self.pre_handler()
-        elif self.mode == self.SETUP:
+        elif self.mode is self.SETUP:
             self.mode = self.LINK_PARAM
             self.pre_handler()
-        elif self.mode == self.LINK_PARAM:
+        elif self.mode is self.LINK_PARAM:
             if self.is_post_oad:
                 self.fsm.transit(StateOadIdle)
             else:
-                async_run(self.fsm.transit, params=[StateOadDiscover, StateOadDiscover.SERVICES], delay=1)
+                self.fsm.transit(StateOadDiscover, StateOadDiscover.SERVICES)
 
 
 class StateOadDiscover(State):
@@ -638,8 +637,6 @@ class StatePostOad(State):
     def post_handler(self):
         print("|||||||||||||| OAD COMPLETE |||||||||||||||||")
         self.fsm.process_complete_cb()
-        # async_run(self.fsm.transit, params=[StateOadInit, True], delay=5)
-        # self.fsm.transit(StateOadInit, param=[True])
 
     def timeout(self):
         # post here an event of OAD failure

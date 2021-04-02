@@ -24,14 +24,16 @@ class DeviceIndicationHandler:
         if conn_handle not in self.device_info.keys():
             self.send_response(msg=Messages.ERR_DEV_CONN_NOT_EXIST,
                                data={"conn_handle": conn_handle})
-            return
+            return False
+
         data_uuid = DiscoveryHandler.get_uuid_by_handle(conn_handle, handle)
         mac = DevConnDataHandler.get_mac_by_handle(conn_handle)
 
         # print("+++++++++++++++++++++++++++ uuid:", data_uuid)
-
+        data_changed = True
         if data_uuid == CharUuid.CS_MODE.uuid:
-            pass
+            DevDataHandler.upd_dev_state(mac, value)
+
         elif data_uuid == CharUuid.DS_STATE.uuid:
             DevDataHandler.upd_dev_status(mac, value)
 
@@ -51,6 +53,11 @@ class DeviceIndicationHandler:
             dev_type = DevDataHandler.get_dev(mac).type
             Dispatcher.send_msg(Messages.UPDATE_VERSION_DISCOVERED, {'mac': mac, 'version': version, 'type': dev_type})
             pass
+        else:
+            data_changed = False
+
+        return data_changed
+
 
     def process_val_disc_resp(self, conn_handle, char_value_data):
         if conn_handle not in self.device_info.keys():

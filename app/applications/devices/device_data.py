@@ -161,15 +161,15 @@ class DevDataHandler:
         dev.save()
 
     @classmethod
-    def upd_dev_detection(cls, _mac, _detect):
+    def upd_dev_state(cls, _mac, _state):
         dev = next(x for x in cls.devices if x.mac == _mac)
-        dev.status = int.from_bytes(_detect, byteorder='little') > 0
+        dev.state = int.from_bytes(_state, byteorder='little') > 0
         dev.save()
 
     @classmethod
-    def upd_dev_status(cls, _mac, _state):
+    def upd_dev_status(cls, _mac, _status):
         dev = next(x for x in cls.devices if x.mac == _mac)
-        dev.status = int.from_bytes(_state, byteorder='little') > 0
+        dev.status = int.from_bytes(_status, byteorder='little') > 0
         dev.save()
 
     @classmethod

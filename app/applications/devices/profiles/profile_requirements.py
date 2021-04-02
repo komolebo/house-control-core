@@ -17,6 +17,7 @@ class ProfileTable:
     char_dev_map = {
         DeviceTypeInfo.motion: [
             # CharUuid.DEVICE_NAME.uuid,
+            CharUuid.CS_MODE.uuid,
             CharUuid.DS_STATE.uuid,
             CharUuid.TS_STATE.uuid,
             CharUuid.BATTERY_LEVEL.uuid,
@@ -28,6 +29,7 @@ class ProfileTable:
     disc_char_dev_map = {
         DeviceTypeInfo.motion: [
             # CharUuid.DEVICE_NAME.uuid,
+            CharUuid.CS_MODE.uuid,
             CharUuid.DS_STATE.uuid,
             CharUuid.TS_STATE.uuid,
             CharUuid.BATTERY_LEVEL.uuid,
