@@ -6,4 +6,5 @@ class MBox(AbstractNamedEnumsInClass):
     DEV = 2
     NPI = 3
     FRONT = 4
+    UPD = 5
 

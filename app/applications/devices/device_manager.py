@@ -1,11 +1,12 @@
 from django.forms.models import model_to_dict
 
-from app.applications.devices.device_connection import DevConnHandler, DevConnManager
+from app.applications.devices.device_connection import DevConnManager
 from app.applications.devices.discovery.mtu_cfg import MtuCfgInterceptHandler
 from app.applications.devices.interceptors.adjuster import AdjustInterceptHandler
 from app.applications.devices.interceptors.establisher import EstablishInterceptHandler
 from app.applications.devices.interceptors.writer import WriteInterceptHandler
 from app.applications.devices.device_data import DevDataHandler
+from app.applications.devices.conn_info import DevConnDataHandler
 from app.applications.devices.device_data_collect import DeviceIndicationHandler
 from app.applications.devices.discovery.indicator import CfgDiscInterceptHandler
 from app.applications.devices.interceptors.initiator import InitInterceptHandler
@@ -38,8 +39,7 @@ class DeviceManager:
         self.data_sender = lambda data: self.npi.send_binary_data(data)
         self.npi_interceptor = None
         self.disc_manager = DiscoveryManager()
-        self.disc_handler = DiscoveryHandler()
-        self.dev_indication_handler = DeviceIndicationHandler(self.disc_handler, self.send_response)
+        self.dev_indication_handler = DeviceIndicationHandler(self.send_response)
 
     def process_npi_msg(self, npi_msg):
         if self.npi_interceptor:
@@ -49,11 +49,13 @@ class DeviceManager:
         NotifyListenHandler.listen(npi_msg, self.send_response, self.data_sender)
 
     def send_response(self, msg=None, data=None):
-        self.npi_interceptor = None
         Dispatcher.send_msg(msg, data)
 
     def handle_device_data_change(self, conn_handle, value, handle):
         pass
+
+    def complete_interception(self):
+        self.npi_interceptor = None
 
 
 class DeviceApp(AppThread, DeviceManager):
@@ -75,15 +77,15 @@ class DeviceApp(AppThread, DeviceManager):
 # ------ CRUD operations ------------------------------------------------------------------
         if msg is Messages.DEV_INFO_READ:
             mac = data['mac']
-            dev = DevDataHandler.read_dev(mac)
+            dev = DevDataHandler.read_dev(mac, _serializable=True)
             FrontUpdateHandler.notify_front(FrontSignals.DEV_READ_RESP, data=dev)
 
         elif msg is Messages.DEV_INFO_READ_LIST:
-            all_devices = DevDataHandler.get_dev_list()
+            all_devices = DevDataHandler.get_dev_list(_serializable=True)
             # populate conn handle info
-            for dev in all_devices:
-                dev['active'] = DevConnHandler.is_mac_active(dev['mac'])
-                print(dev)
+            # for dev in all_devices:
+            #     dev['active'] = DevConnDataHandler.is_mac_active(dev['mac'])
+            #     print(dev)
             FrontUpdateHandler.notify_front(FrontSignals.DEV_READ_LIST_RESP, data=all_devices)
 
         elif msg is Messages.DEV_INFO_ADD:
@@ -96,17 +98,18 @@ class DeviceApp(AppThread, DeviceManager):
         elif msg is Messages.DEV_INFO_REM:
             mac = data['mac']
             DevDataHandler.rem_dev(mac)
+            if DevConnManager.is_mac_active(mac):
+                Dispatcher.send_msg(Messages.TERMINATE_CONN, data={'conn_handle': data['conn_handle']})
             FrontUpdateHandler.notify_front(FrontSignals.DEV_REM_ACK, {'data': mac})
 
         elif msg is Messages.DEV_INFO_UPD:
             mac = data['mac']
             new_state = data['state']
-            conn_handle = DevConnHandler.get_handle_by_mac(mac)
-            uuid_handle = self.disc_handler.get_handle_by_uuid(conn_handle, CharUuid.CS_MODE.uuid)[0]
-            sensor_cfg_update = new_state != DevDataHandler.get_dev(mac)
-
-            DevDataHandler.upd_dev(mac, data['name'], data['location'], data['state'])
-            if sensor_cfg_update:
+            sensor_cfg_update = new_state != DevDataHandler.get_dev(mac).state
+            DevDataHandler.upd_dev(mac, _name=data['name'], _location=data['location'], _state=new_state)
+            if sensor_cfg_update and DevConnManager.is_mac_active(mac):
+                conn_handle = DevConnDataHandler.get_handle_by_mac(mac)
+                uuid_handle = DiscoveryHandler.get_handle_by_uuid(conn_handle, CharUuid.CS_MODE.uuid)[0]
                 Dispatcher.send_msg(Messages.DEV_WRITE_CHAR_VAL, {'conn_handle': conn_handle,
                                                                   'handle': uuid_handle,
                                                                   'value': bytes([new_state])})
@@ -122,22 +125,28 @@ class DeviceApp(AppThread, DeviceManager):
             self.npi_interceptor.start()
 
         elif msg in (Messages.CENTRAL_ADJUST, Messages.CENTRAL_INIT_RESP):
-            self.npi_interceptor = AdjustInterceptHandler(self.data_sender, self.send_response)
+            self.npi_interceptor = AdjustInterceptHandler(self.data_sender, self.send_response, self.complete_interception)
             self.npi_interceptor.start()
 
         elif msg is Messages.CENTRAL_ADJUST_RESP:
-            DevConnManager.scan_start_schedule()
+            DevConnManager.start_scanning()
 
 #-------------------------------------------------------------------------------------------
 #------ Do here mutually exclusive GATT procedures -----------------------------------------
         elif msg is Messages.OAD_START:
             if self.npi_interceptor:
-                Dispatcher.send_msg(Messages.OAD_COMPLETE, {"status": RespCode.BUSY})
+                Dispatcher.send_msg(Messages.OAD_COMPLETE, {"status": RespCode.BUSY, "mac": data["mac"]})
             else:
-                self.npi_interceptor = OadInterceptHandler(self.data_sender, self.send_response)
+                file_path = DevDataHandler.to_update_d[data["mac"]]
+                self.npi_interceptor = OadInterceptHandler(self.data_sender, self.send_response, self.complete_interception,
+                                                           data["mac"], file_path)
                 self.npi_interceptor.start()
+                DevConnManager.stop_scanning()
         elif msg is Messages.OAD_ABORT:
             self.npi_interceptor.abort()
+
+        elif msg is Messages.OAD_COMPLETE:
+            DevConnManager.start_scanning()
 
         elif msg is Messages.DEV_WRITE_CHAR_VAL:
             if self.npi_interceptor:
@@ -150,14 +159,20 @@ class DeviceApp(AppThread, DeviceManager):
                                                              data["conn_handle"], data["handle"], data["value"])
                 self.npi_interceptor.start()
 
+# -------------------------------------------------------------------------------------------
+# ------ Connect devices --------------------------------------------------------------------
+        elif msg is Messages.SEARCH_DEVICES:
+            DevConnManager.handle_scan_on_demand()
+
         elif msg is Messages.SCAN_DEVICE:
             if self.npi_interceptor:
                 Dispatcher.send_msg(Messages.SCAN_DEVICE_RESP, {"data" : 0, "status": RespCode.BUSY})
             else:
-                self.npi_interceptor = ScanInterceptHandler(self.data_sender, self.send_response)
+                self.npi_interceptor = ScanInterceptHandler(self.data_sender, self.send_response, self.complete_interception)
                 self.npi_interceptor.start()
         elif msg is Messages.SCAN_DEVICE_ABORT:
             self.npi_interceptor.abort()
+            FrontUpdateHandler.notify_front(FrontSignals.DEV_SCAN_RESP, {'data': []})
 
         elif msg is Messages.SCAN_DEVICE_RESP:
             if data["status"] is STATUS_SUCCESS:
@@ -165,7 +180,7 @@ class DeviceApp(AppThread, DeviceManager):
                 DevConnManager.process_scan_resp(scan_list=data["data"])
 
                 # notify front of scanned unknown devices
-                known_dev_list = [x['mac'] for x in DevDataHandler.read_all_dev()]
+                known_dev_list = [x.mac for x in DevDataHandler.read_all_dev()]
                 # print("known dev list", known_dev_list)
                 unknown_scan_list = [x for x in data["data"] if x.mac not in known_dev_list]
                 # print("unknown dev list", unknown_scan_list)
@@ -181,7 +196,8 @@ class DeviceApp(AppThread, DeviceManager):
                                                                    "type": None,
                                                                    "name": None})
             else:
-                self.npi_interceptor = EstablishInterceptHandler(self.data_sender, self.send_response, data)
+                self.npi_interceptor = EstablishInterceptHandler(self.data_sender, self.send_response,
+                                                                 self.complete_interception, data)
                 self.npi_interceptor.start()
         elif msg is Messages.ESTABLISH_CONN_ABORT:
             self.npi_interceptor.abort()
@@ -189,7 +205,7 @@ class DeviceApp(AppThread, DeviceManager):
             if data["status"] is RespCode.SUCCESS:
                 self.disc_manager.handle_new_conn(data["conn_handle"], data["type"])
                 self.dev_indication_handler.add_device(data["conn_handle"], data["type"], data["name"])
-                DevConnHandler.add_conn_info(data["conn_handle"], data["mac"])
+                DevConnDataHandler.add_conn_info(data["conn_handle"], data["mac"])
                 FrontUpdateHandler.notify_front(FrontSignals.DEV_CONN_RESP, {})
                 Dispatcher.send_msg(Messages.DEV_INFO_ADD, data)
 
@@ -202,7 +218,9 @@ class DeviceApp(AppThread, DeviceManager):
                                                                  data["conn_handle"])
                 self.npi_interceptor.start()
         elif msg is Messages.DEVICE_DISCONN:
-            DevConnHandler.del_conn_info(_conn_handle=data["conn_handle"])
+            DevConnDataHandler.del_conn_info(_conn_handle=data["conn_handle"])
+            mac = DevConnDataHandler.get_mac_by_handle(data['conn_handle'])
+            DevDataHandler.set_dev_to_update(mac, _to_update=False)
             FrontUpdateHandler.notify_front(FrontSignals.DEV_DISCONN, {})
 
         elif msg is Messages.DEV_MTU_CFG:
@@ -212,6 +230,7 @@ class DeviceApp(AppThread, DeviceManager):
             else:
                 self.npi_interceptor = MtuCfgInterceptHandler(self.data_sender,
                                                               self.send_response,
+                                                              self.complete_interception,
                                                               data["conn_handle"])
                 self.npi_interceptor.start()
 
@@ -227,6 +246,7 @@ class DeviceApp(AppThread, DeviceManager):
             else:
                 self.npi_interceptor = SvcDiscInterceptHandler(self.data_sender,
                                                                self.send_response,
+                                                               self.complete_interception,
                                                                data["conn_handle"])
                 self.npi_interceptor.start()
         elif msg is Messages.DEV_SVC_DISCOVER_RESP:
@@ -241,6 +261,7 @@ class DeviceApp(AppThread, DeviceManager):
             else:
                 self.npi_interceptor = CharDiscInterceptHandler(self.data_sender,
                                                                 self.send_response,
+                                                                self.complete_interception,
                                                                 data["conn_handle"])
                 self.npi_interceptor.start()
         elif msg is Messages.DEV_CHAR_DISCOVER_RESP:
@@ -252,9 +273,10 @@ class DeviceApp(AppThread, DeviceManager):
                 Dispatcher.send_msg(Messages.ENABLE_DEV_IND_RESP, {"status": RespCode.BUSY,
                                                                    "conn_handle": data["conn_handle"]})
             else:
-                ccc_list = self.disc_handler.get_handle_by_uuid(data["conn_handle"],CharUuid.GATT_CCC_UUID)
+                ccc_list = DiscoveryHandler.get_handle_by_uuid(data["conn_handle"],CharUuid.GATT_CCC_UUID)
                 self.npi_interceptor = CfgDiscInterceptHandler(self.data_sender,
                                                                self.send_response,
+                                                               self.complete_interception,
                                                                data["conn_handle"],
                                                                ccc_list)
                 self.npi_interceptor.start()
@@ -267,9 +289,15 @@ class DeviceApp(AppThread, DeviceManager):
                                                                         "conn_handle": data["conn_handle"],
                                                                         "char_value_data": []})
             else:
-                self.npi_interceptor = ValDiscInterceptHandler(self.data_sender, self.send_response, self.disc_handler,
-                                                               data["conn_handle"])
+                self.npi_interceptor = ValDiscInterceptHandler(self.data_sender, self.send_response,
+                                                               self.complete_interception, data["conn_handle"])
                 self.npi_interceptor.start()
         elif msg is Messages.DEV_VALUES_DISCOVER_RESP:
             self.dev_indication_handler.process_val_disc_resp(data["conn_handle"], data["char_value_data"])
-#------------------------------------------------------------------------------------------
+
+#---------Updater section -------------------------------------------------------------------
+        elif msg is Messages.UPDATE_AVAILABLE:
+            DevDataHandler.set_dev_to_update(data['mac'], _to_update=True, _file_path=data['file_path'])
+            FrontUpdateHandler.notify_front(FrontSignals.DEV_NOTIFY_DATA, data={})
+
+# ------- !!!!!!!!! section -----------------------------------------------------------------

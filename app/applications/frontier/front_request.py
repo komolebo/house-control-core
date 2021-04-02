@@ -7,10 +7,9 @@ from app.middleware.messages import Messages
 
 class FrontReqHandler:
     def __init__(self):
-        self.disc_handler = DiscoveryHandler()
         self.req_table = {
             FrontSignals.DEV_SCAN_REQ : (
-                lambda data : Dispatcher.send_msg(Messages.SCAN_DEVICE, data),
+                lambda data : Dispatcher.send_msg(Messages.SEARCH_DEVICES, data),
                 []
             ),
             FrontSignals.DEV_CONN_REQ : (
@@ -36,6 +35,11 @@ class FrontReqHandler:
             FrontSignals.DEV_READ_LIST : (
                 lambda data : Dispatcher.send_msg(Messages.DEV_INFO_READ_LIST, data),
                 [] # todo
+            ),
+
+            FrontSignals.UPDATE_DEV: (
+                lambda data : Dispatcher.send_msg(Messages.OAD_START, data),
+                []
             ),
 
             # FrontSignals.DEV_CONN_REQ: (
@@ -75,13 +79,14 @@ class FrontReqHandler:
         self.send_event_response(msg=Messages.ESTABLISH_CONN,
                                  data={'mac': data['mac'],
                                        'type': data['type'],
-                                       'name': data['name']})
+                                       'name': data['name'],
+                                       'version': data['version']})
 
     def handle_dev_change_state_req(self, data):
         conn_handle = data['conn_handle']
-        handle = self.disc_handler.get_handle_by_uuid(conn_handle,
-                                                      CharUuid.DS_STATE.uuid
-                                                      )[0]
+        handle = DiscoveryHandler.get_handle_by_uuid(conn_handle,
+                                                     CharUuid.DS_STATE.uuid
+                                                     )[0]
         self.send_event_response(msg=Messages.DEV_INDICATION,
                                  data={'conn_handle': conn_handle,
                                        'handle': handle,
@@ -89,9 +94,9 @@ class FrontReqHandler:
 
     def handle_dev_change_name_req(self, data):
         conn_handle = data['conn_handle']
-        handle = self.disc_handler.get_handle_by_uuid(conn_handle,
-                                                      CharUuid.DEVICE_NAME.uuid
-                                                      )[0]
+        handle = DiscoveryHandler.get_handle_by_uuid(conn_handle,
+                                                     CharUuid.DEVICE_NAME.uuid
+                                                     )[0]
         self.send_event_response(msg=Messages.DEV_INDICATION,
                                  data={'conn_handle': conn_handle,
                                        'handle': handle,

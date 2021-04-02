@@ -6,9 +6,10 @@ from app.middleware.messages import Messages
 
 
 class CfgDiscInterceptHandler(HciInterceptHandler, HciAckHandler):
-    def __init__(self, data_sender, complete_cb, conn_handle, ccc_list):
+    def __init__(self, data_sender, send_resp, complete_cb, conn_handle, ccc_list):
         self.data_sender = data_sender
         self.ext_complete_cb = complete_cb
+        self.send_response = send_resp
         self.conn_handle = conn_handle
         self.ccc_list = ccc_list
         HciAckHandler.__init__(self, [
@@ -29,7 +30,8 @@ class CfgDiscInterceptHandler(HciInterceptHandler, HciAckHandler):
         self.enable_next_ccc()
 
     def complete(self, msg=None, data=None):
-        self.ext_complete_cb(msg, data)
+        self.send_response(msg, data)
+        self.ext_complete_cb()
 
     def abort(self):
         pass

@@ -65,8 +65,9 @@ class ScanFilter:
 
 
 class ScanInterceptHandler(HciInterceptHandler, HciAckHandler):
-    def __init__(self, data_sender, complete_cb):
+    def __init__(self, data_sender, send_resp, complete_cb):
         self.data_sender = data_sender
+        self.send_response = send_resp
         self.ext_complete_cb = complete_cb
         HciAckHandler.__init__(self, [
             Event.GAP_HCI_ExtentionCommandStatus, # HCI ASK
@@ -86,7 +87,8 @@ class ScanInterceptHandler(HciInterceptHandler, HciAckHandler):
         pass
 
     def complete(self, msg=None, data=None):
-        self.ext_complete_cb(msg, data)
+        self.send_response(msg, data)
+        self.ext_complete_cb()
 
     def abort(self):
         self.ext_complete_cb(self.scan_list)

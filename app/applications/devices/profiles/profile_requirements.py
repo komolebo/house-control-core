@@ -7,7 +7,8 @@ class ProfileTable:
         DeviceTypeInfo.motion: [
             ServiceUuid.CONFIG,
             ServiceUuid.DATA,
-            ServiceUuid.TAMPER
+            ServiceUuid.TAMPER,
+            ServiceUuid.RESET
         ],
         DeviceTypeInfo.gas: [
         ]
@@ -15,9 +16,21 @@ class ProfileTable:
 
     char_dev_map = {
         DeviceTypeInfo.motion: [
-            CharUuid.DEVICE_NAME.uuid,
+            # CharUuid.DEVICE_NAME.uuid,
             CharUuid.DS_STATE.uuid,
             CharUuid.TS_STATE.uuid,
-            CharUuid.BATTERY_LEVEL.uuid
+            CharUuid.BATTERY_LEVEL.uuid,
+            CharUuid.SOFTWARE_REVISION_UUID.uuid,
+            # CharUuid.OAD_START_UUID
+        ]
+    }
+
+    disc_char_dev_map = {
+        DeviceTypeInfo.motion: [
+            # CharUuid.DEVICE_NAME.uuid,
+            CharUuid.DS_STATE.uuid,
+            CharUuid.TS_STATE.uuid,
+            CharUuid.BATTERY_LEVEL.uuid,
+            CharUuid.SOFTWARE_REVISION_UUID.uuid,
         ]
     }

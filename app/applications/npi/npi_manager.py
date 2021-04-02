@@ -17,7 +17,6 @@ class NpiManager:
             # bytesize=serial.EIGHTBITS,
             # timeout=0)
         )
-        # self.machine = Machine(self.ser)
         self.npi_reader = NpiReader(self.ser)
 
     def listen(self):
@@ -48,7 +47,10 @@ class NpiManager:
 class NpiApp(AppThread):
     def __init__(self, mbox):
         super().__init__(mbox)
-        self.npi = NpiManager()#'/dev/ttyUSB0')
+        self.npi = NpiManager()
+
+        # init central ble host when npi is ready
+        Dispatcher.send_msg(Messages.CENTRAL_RESET, {})
 
     def on_message(self, msg, data):
         if msg is Messages.NPI_SERIAL_PORT_LISTEN:

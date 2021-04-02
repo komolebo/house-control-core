@@ -1,5 +1,6 @@
 import struct
 
+from app.applications.devices.discovery.discovery import DiscoveryHandler
 from app.applications.devices.interceptors.ack_handler import HciAckHandler
 from app.applications.devices.conn_info import CharValueData
 from app.applications.devices.interceptors.hci_handler import HciInterceptHandler
@@ -12,19 +13,19 @@ from app.middleware.nrc import RespCode
 
 
 class ValDiscInterceptHandler(HciInterceptHandler, HciAckHandler):
-    def __init__(self, data_sender, complete_cb, disc_handler, conn_handle):
+    def __init__(self, data_sender, send_resp, complete_cb, conn_handle):
         self.conn_handle = conn_handle
         self.data_sender = data_sender
+        self.send_response = send_resp
         self.ext_complete_cb = complete_cb
         HciAckHandler.__init__(self, [
             Event.GAP_HCI_ExtentionCommandStatus
         ])
-        self.disc_handler = disc_handler
         self.value_data_list = []
 
-        dev_type = disc_handler.handle_info[conn_handle].dev_type
-        self.uuid_list = ProfileTable.char_dev_map[dev_type]
-        self.handles = [disc_handler.get_handle_by_uuid(conn_handle, uuid)[0] for uuid in self.uuid_list]
+        dev_type = DiscoveryHandler.handle_info[conn_handle].dev_type
+        self.uuid_list = ProfileTable.disc_char_dev_map[dev_type]
+        self.handles = [DiscoveryHandler.get_handle_by_uuid(conn_handle, uuid)[0] for uuid in self.uuid_list]
 
     def start(self):
         handle_buf = [i for sub in [struct.pack('<H', handle) for handle in self.handles] for i in sub]
@@ -35,13 +36,13 @@ class ValDiscInterceptHandler(HciInterceptHandler, HciAckHandler):
         self.data_sender(tx_msg.buf_str)
 
     def complete(self, msg=None, data=None):
-        self.ext_complete_cb(msg, data)
+        self.send_response(msg, data)
+        self.ext_complete_cb()
 
     def abort(self):
         pass
 
     def handle_multi_char_resp(self, msg_data):
-        # uuid_list = [self.disc_handler.get_uuid_by_handle(handle) for handle in self.handles]
         pos = 0
         for (uuid, handle) in zip(self.uuid_list, self.handles):
             if pos < msg_data.pdu_len:

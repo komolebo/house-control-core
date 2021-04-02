@@ -32,3 +32,6 @@ class FrontSignals:
 
     DEV_READ = 'dev_read'
     DEV_READ_RESP = 'dev_read_resp'
+
+    UPDATE_DEV = 'update_dev'
+    UPDATE_DEV_ABORT = 'update_dev_abort'

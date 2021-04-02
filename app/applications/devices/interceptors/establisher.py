@@ -6,8 +6,9 @@ from app.middleware.messages import Messages
 
 
 class EstablishInterceptHandler(HciInterceptHandler, HciAckHandler):
-    def __init__(self, data_sender, complete_cb, data):
+    def __init__(self, data_sender, send_resp, complete_cb, data):
         self.data_sender = data_sender
+        self.send_response = send_resp
         self.ext_complete_cb = complete_cb
         self.device_type = data["type"]
         self.device_name = data["name"]
@@ -27,8 +28,8 @@ class EstablishInterceptHandler(HciInterceptHandler, HciAckHandler):
         self.data_sender(tx_msg.buf_str)
 
     def complete(self, msg=None, data=None):
-        self.ext_complete_cb(msg=msg,
-                             data=data)
+        self.send_response(msg, data)
+        self.ext_complete_cb()
 
     def abort(self):
         pass

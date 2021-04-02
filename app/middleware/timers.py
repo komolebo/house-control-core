@@ -1,4 +1,11 @@
+import threading
 from apscheduler.schedulers.background import BackgroundScheduler
+
+def async_run(fn, delay=0, params=None):
+    print("------------- PAUSING =================")
+    t = threading.Timer(delay, fn, params)
+    t.start()
+
 
 class ScheduleItems:
     CONN_POLL = 'conn_poll'
@@ -17,6 +24,10 @@ class Scheduler:
     @classmethod
     def remove_job(cls, _id):
         cls.scheduler.remove_job(_id)
+
+    @classmethod
+    def is_job(cls, _id):
+        return cls.scheduler.get_job(_id)
 
 
 class TimerHandler:

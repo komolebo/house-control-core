@@ -1,81 +1,75 @@
+from apscheduler.schedulers.background import BackgroundScheduler
+
 from app.applications.devices.device_data import DevDataHandler
+from app.applications.devices.conn_info import DevConnDataHandler
 from app.middleware.dispatcher import Dispatcher
 from app.middleware.messages import Messages
-from app.middleware.timers import Scheduler, ScheduleItems
+from app.middleware.timers import ScheduleItems
 
 
-class DevConnHandler:
-    dev_conn_info = {}  # key -> handle
-                        # value -> MAC
-    @classmethod
-    def add_conn_info(cls, _handle, _mac):
-        if isinstance(_mac, (bytes, bytearray)):
-            _mac = str(bytes(_mac).hex())
-        if _handle in cls.dev_conn_info.keys():
-            raise Exception("Connection handle {} is already established".format(_handle))
-        cls.dev_conn_info[_handle] = _mac
+# Data scanning, tracking lost connections, reconnecting
+class DevConnManager(DevConnDataHandler):
+    scheduler = BackgroundScheduler()
+    scheduler.start()
+    scan_pending = False
 
     @classmethod
-    def del_conn_info(cls, _conn_handle=None, _mac=None):
-        if _conn_handle is not None:
-            cls.dev_conn_info.pop(_conn_handle)
-        elif _mac:
-            cls.dev_conn_info = {hdl:mac for hdl,mac in cls.dev_conn_info.items() if mac != _mac}
+    def _add_job(cls):
+        scan_period = 20  # sec
+        cls.scheduler.add_job(cls.scan_schedule_cb, 'interval', seconds=scan_period, id=ScheduleItems.CONN_POLL)
 
     @classmethod
-    def get_handle_by_mac(cls, _mac):
-        for handle, mac in cls.dev_conn_info.items():
-            if mac == _mac:
-                return handle
-        return None
+    def _rem_job(cls):
+        if cls.scheduler.get_job(ScheduleItems.CONN_POLL):
+            cls.scheduler.remove_job(ScheduleItems.CONN_POLL)
 
     @classmethod
-    def get_mac_by_handle(cls, _handle):
-        return cls.dev_conn_info[_handle] if _handle in cls.dev_conn_info.keys() else None
-
-    @classmethod
-    def is_mac_active(cls, _mac):
-        return cls.get_handle_by_mac(_mac) is not None
-
-
-class DevConnManager(DevConnHandler):
-    SCAN_PERIOD = 20  # sec
-    scan_enabled = False  # by default period scanner is enabled
-
-    @classmethod
-    def scan_start_schedule(cls):
-        if not cls.scan_enabled:
-            Scheduler.register_job(cls.scan_req, ScheduleItems.CONN_POLL, cls.SCAN_PERIOD)
-            cls.scan_enabled = True
-        else:
+    def start_scanning(cls):
+        if cls.scheduler.get_job(ScheduleItems.CONN_POLL):
             print("period scanner is already enabled")
+        else:
+            cls._add_job()
 
     @classmethod
-    def scan_disable_schedule(cls):
-        if cls.scan_enabled:
-            Scheduler.remove_job(ScheduleItems.CONN_POLL)
-            cls.scan_enabled = False
+    def restart_scanning(cls):
+        cls._rem_job()
+        cls._add_job()
 
     @classmethod
-    def scan_req(cls):
-        print("SCANNING")
+    def stop_scanning(cls):
+        cls._rem_job()
+
+    @classmethod
+    def scan_schedule_cb(cls):
         # check for devices in database without conn handle
         for dev in DevDataHandler.read_all_dev():
-            print("SCANNING", dict(dev))
-            if not cls.is_mac_active(dev['mac']) and "00000000000" not in dev["mac"]:
+            if not cls.is_mac_active(dev.mac) and "00000000000" not in dev.mac:
+                print("SCANNING for ", dict(DevDataHandler.get_dev(dev.mac, _serializable=True)))
                 Dispatcher.send_msg(Messages.SCAN_DEVICE, data={})
+                cls.scan_pending = True
                 return
 
     @classmethod
     def process_scan_resp(cls, scan_list):
+        cls.scan_pending = False
+
         # add conn handle for scanned device which is in db
         for dev in DevDataHandler.read_all_dev():
             for scan_dev in scan_list:
                 print("scan dev = {}, db dev = {}".format(dev, scan_dev))
-                if scan_dev.mac == dev['mac']:
+                if scan_dev.mac == dev.mac:
                     # device is available again after disconnection
                     # force conn establishment with known device
-                    Dispatcher.send_msg(Messages.ESTABLISH_CONN, {"mac": dev['mac'],
-                                                                  "type": dev['type'],
-                                                                  "name": dev['name'],
-                                                                  "location": dev['location']})
+                    Dispatcher.send_msg(Messages.ESTABLISH_CONN, {"mac": dev.mac,
+                                                                  "type": dev.type,
+                                                                  "name": dev.name,
+                                                                  "location": dev.location})
+
+    @classmethod
+    def handle_scan_on_demand(cls):
+        if cls.scan_pending:
+            print("Scan is already running, skipping on demand scan req")
+            pass  # if periodic scan is in progress -> do not scan again
+        else:  # otherwise do a scan and delay periodic
+            cls.restart_scanning()
+            Dispatcher.send_msg(Messages.SCAN_DEVICE, data={})

@@ -32,6 +32,9 @@ class Messages(AbstractNamedEnumsInClass):
     OAD_ABORT = create_id()
     OAD_COMPLETE = create_id()
 
+    SEARCH_DEVICES = create_id()
+    SEARCH_DEVICES_RESP = create_id()
+
     SCAN_DEVICE = create_id()
     SCAN_DEVICE_ABORT = create_id()
     SCAN_DEVICE_RESP = create_id()
@@ -87,3 +90,7 @@ class Messages(AbstractNamedEnumsInClass):
 
     DEV_INFO_READ_LIST = create_id()
     DEV_INFO_READ_LIST_ACK = create_id()
+
+# update
+    UPDATE_VERSION_DISCOVERED = create_id()
+    UPDATE_AVAILABLE = create_id()

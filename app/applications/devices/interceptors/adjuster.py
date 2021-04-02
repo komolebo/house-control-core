@@ -6,8 +6,9 @@ from app.middleware.messages import Messages
 
 
 class AdjustInterceptHandler(HciInterceptHandler, HciAckHandler):
-    def __init__(self, data_sender, complete_cb):
+    def __init__(self, data_sender, send_resp, complete_cb):
         self.data_sender = data_sender
+        self.send_resp = send_resp
         self.ext_complete_cb = complete_cb
         HciAckHandler.__init__(self, [
             Event.GAP_HCI_ExtentionCommandStatus,
@@ -30,7 +31,8 @@ class AdjustInterceptHandler(HciInterceptHandler, HciAckHandler):
         self._send_conn_param(Constants.INIT_PHYPARAM_SUP_TIMEOUT)
 
     def complete(self, msg=None, data=None):
-        self.ext_complete_cb(msg, data)
+        self.send_resp(msg, data)
+        self.ext_complete_cb()
 
     def abort(self):
         pass

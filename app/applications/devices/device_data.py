@@ -1,7 +1,6 @@
 from django.forms import model_to_dict
 
-from app.middleware.dispatcher import Dispatcher
-from app.middleware.messages import Messages
+from app.applications.devices.conn_info import DevConnDataHandler
 from app.models.models import Sensor
 
 
@@ -93,27 +92,37 @@ class MotionData(DeviceProfileData, TamperData):
 
 class DevDataHandler:
     devices = []
+    to_update_d = {}
 
     @classmethod
     def __init__(cls):
         cls.devices = Sensor.objects.all()
 
-    @staticmethod
-    def read_dev(_mac):
-        return model_to_dict(Sensor.objects.get(mac=_mac))
+    @classmethod
+    def _data_wrapper(cls, obj):
+        obj = model_to_dict(obj)
+        obj['active'] = DevConnDataHandler.is_mac_active(obj['mac'])
+        obj['to_update'] = True if obj['mac'] in cls.to_update_d.keys() else False
+        return obj
 
     @classmethod
-    def get_dev(cls, _mac):
-        return next(x for x in cls.devices if x.mac == _mac)
+    def get_dev(cls, _mac, _serializable=False):
+        obj = next(x for x in cls.devices if x.mac == _mac)
+        return cls._data_wrapper(obj) if _serializable else obj
 
     @classmethod
-    def get_dev_list(cls):
-        return [model_to_dict(x) for x in cls.devices]
+    def get_dev_list(cls, _serializable=False):
+        return [cls._data_wrapper(x) if _serializable else x for x in cls.devices]
 
     @classmethod
-    def read_all_dev(cls):
+    def read_dev(cls, _mac, _serializable=False):
+        obj = Sensor.objects.get(mac=_mac)
+        return cls._data_wrapper(obj) if _serializable else obj
+
+    @classmethod
+    def read_all_dev(cls, _serializable=False):
         cls.devices = Sensor.objects.all()
-        return [model_to_dict(x) for x in cls.devices]
+        return [cls._data_wrapper(x) if _serializable else x for x in cls.devices]
 
     @classmethod
     def add_dev(cls, _mac, _name, _type, _location):
@@ -126,11 +135,11 @@ class DevDataHandler:
             cls.read_all_dev()
 
     @classmethod
-    def upd_dev(cls, _mac, _name, _location, _state):
+    def upd_dev(cls, _mac, _name=None, _location=None, _state=None):
         dev = Sensor.objects.get(mac=_mac)
-        dev.location =  _location
-        dev.name = _name
-        dev.state = _state
+        dev.location = dev.location if _location is None else _location
+        dev.name = dev.name if _name is None else _name
+        dev.state = dev.state if _state is None else _state
         dev.save()
         cls.read_all_dev()
 
@@ -141,6 +150,8 @@ class DevDataHandler:
             [device.delete() for device in filtered]  # in case of several devices with same MAC
         else:
             filtered.delete()
+        if _mac in cls.to_update_d.keys():
+            cls.to_update_d.pop(_mac)
         cls.read_all_dev()
 
     @classmethod
@@ -167,3 +178,10 @@ class DevDataHandler:
         _battery = int.from_bytes(_battery, byteorder='little')
         dev.battery = 100 if _battery > 100 else _battery
         dev.save()
+
+    @classmethod
+    def set_dev_to_update(cls, _mac, _to_update, _file_path = None):
+        if _to_update and _file_path:
+            cls.to_update_d[_mac] = _file_path
+        elif _mac in cls.to_update_d.keys():
+            cls.to_update_d.pop(_mac)

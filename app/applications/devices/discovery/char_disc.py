@@ -8,9 +8,10 @@ from app.middleware.messages import Messages
 
 
 class CharDiscInterceptHandler(HciInterceptHandler, HciAckHandler):
-    def __init__(self, data_sender, complete_cb, conn_handle):
+    def __init__(self, data_sender, send_resp, complete_cb, conn_handle):
         self.ext_complete_cb = complete_cb
         self.data_sender = data_sender
+        self.send_response = send_resp
         self.conn_handle = conn_handle
         HciAckHandler.__init__(self, [
             Event.GAP_HCI_ExtentionCommandStatus
@@ -26,7 +27,8 @@ class CharDiscInterceptHandler(HciInterceptHandler, HciAckHandler):
         self.data_sender(tx_msg.buf_str)
 
     def complete(self, msg=None, data=None):
-        self.ext_complete_cb(msg, data)
+        self.send_response(msg, data)
+        self.ext_complete_cb()
 
     def abort(self):
         pass

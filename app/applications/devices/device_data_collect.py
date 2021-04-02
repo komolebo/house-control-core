@@ -1,15 +1,15 @@
-from app.applications.devices.conn_info import CharValueData
-from app.applications.devices.device_connection import DevConnHandler
+from app.applications.devices.conn_info import CharValueData, DevConnDataHandler
 from app.applications.devices.device_data import DeviceTypeInfo, MotionData, DevDataHandler
+from app.applications.devices.discovery.discovery import DiscoveryHandler
 from app.applications.devices.profiles.profile_uuid import CharUuid
+from app.middleware.dispatcher import Dispatcher
 from app.middleware.messages import Messages
 
 
 class DeviceIndicationHandler:
-    def __new__(cls, disc_handler, send_response):  # singleton class
+    def __new__(cls, send_response):  # singleton class
         if not hasattr(cls, 'instance'):
             cls.instance = super(DeviceIndicationHandler, cls).__new__(cls)
-            cls.disc_handler = disc_handler
             cls.send_response = send_response
             cls.device_info = {}
         return cls.instance
@@ -25,10 +25,10 @@ class DeviceIndicationHandler:
             self.send_response(msg=Messages.ERR_DEV_CONN_NOT_EXIST,
                                data={"conn_handle": conn_handle})
             return
-        data_uuid = self.disc_handler.get_uuid_by_handle(conn_handle, handle)
-        mac = DevConnHandler.get_mac_by_handle(conn_handle)
+        data_uuid = DiscoveryHandler.get_uuid_by_handle(conn_handle, handle)
+        mac = DevConnDataHandler.get_mac_by_handle(conn_handle)
 
-        print("+++++++++++++++++++++++++++ uuid:", data_uuid)
+        # print("+++++++++++++++++++++++++++ uuid:", data_uuid)
 
         if data_uuid == CharUuid.CS_MODE.uuid:
             pass
@@ -43,6 +43,13 @@ class DeviceIndicationHandler:
 
         elif data_uuid == CharUuid.DEVICE_NAME:
             # TODO: handle device name
+            pass
+
+        elif data_uuid == CharUuid.SOFTWARE_REVISION_UUID.uuid:
+            version = value.decode("ascii")
+            print("Discovered SOFTWARE REVISION UUID:", value, version)
+            dev_type = DevDataHandler.get_dev(mac).type
+            Dispatcher.send_msg(Messages.UPDATE_VERSION_DISCOVERED, {'mac': mac, 'version': version, 'type': dev_type})
             pass
 
     def process_val_disc_resp(self, conn_handle, char_value_data):

@@ -1,4 +1,4 @@
-from app.applications.devices.conn_info import DeviceConnData
+from app.applications.devices.conn_info import TypeConnHdlData
 from app.applications.devices.profiles.profile_requirements import ProfileTable
 from app.applications.devices.profiles.profile_uuid import CharUuid
 from app.middleware.dispatcher import Dispatcher
@@ -7,56 +7,59 @@ from app.middleware.messages import Messages
 
 # class that reports handle IDs to access any type of device data
 class DiscoveryHandler:
-    def __new__(cls):  # singleton class
-        if not hasattr(cls, 'instance'):
-            cls.instance = super(DiscoveryHandler, cls).__new__(cls)
-            cls.handle_info = {}
-        return cls.instance
+    handle_info = {}
 
-    def add_conn(self, conn_handle, dev_type):
+    @classmethod
+    def add_conn(cls, conn_handle, dev_type):
         print("add_conn")
-        if conn_handle in self.handle_info.keys():
+        if conn_handle in cls.handle_info.keys():
             print("Handle already exist!")
         # Overwrite data
-        self.handle_info[conn_handle] = DeviceConnData(dev_type,
-                                                       services=None,
-                                                       chars=None)
+        cls.handle_info[conn_handle] = TypeConnHdlData(dev_type,
+                                                        services=None,
+                                                        chars=None)
+    @classmethod
+    def add_services(cls, conn_handle, svc_list):
+        if conn_handle in cls.handle_info.keys():
+            cls.handle_info[conn_handle].services = svc_list
 
-    def add_services(self, conn_handle, svc_list):
-        if conn_handle in self.handle_info.keys():
-            self.handle_info[conn_handle].services = svc_list
+    @classmethod
+    def add_chars(cls, conn_handle, char_list):
+        if conn_handle in cls.handle_info.keys():
+            cls.handle_info[conn_handle].chars = char_list
 
-    def add_chars(self, conn_handle, char_list):
-        if conn_handle in self.handle_info.keys():
-            self.handle_info[conn_handle].chars = char_list
+    @classmethod
+    def check_device_services(cls, conn_handle):
+        dev_type = cls.handle_info[conn_handle].dev_type
+        svc_list = cls.handle_info[conn_handle].services
+        return cls.diagnose_device_svc(dev_type, svc_list)
 
-    def check_device_services(self, conn_handle):
-        dev_type = self.handle_info[conn_handle].dev_type
-        svc_list = self.handle_info[conn_handle].services
-        return self.diagnose_device_svc(dev_type, svc_list)
+    @classmethod
+    def check_device_chars(cls, conn_handle):
+        dev_type = cls.handle_info[conn_handle].dev_type
+        char_list = [i.uuid for i in  cls.handle_info[conn_handle].chars]
+        return cls.diagnose_device_char(dev_type, char_list)
 
-    def check_device_chars(self, conn_handle):
-        dev_type = self.handle_info[conn_handle].dev_type
-        char_list = [i.uuid for i in  self.handle_info[conn_handle].chars]
-        return self.diagnose_device_char(dev_type, char_list)
-
-    def get_handle_by_uuid(self, conn_handle, uuid):
-        if conn_handle in self.handle_info.keys():
-            return [i.handle for i in self.handle_info[conn_handle].chars if i.uuid == uuid]
+    @classmethod
+    def get_handle_by_uuid(cls, conn_handle, uuid):
+        if conn_handle in cls.handle_info.keys():
+            return [i.handle for i in cls.handle_info[conn_handle].chars if i.uuid == uuid]
         return None
 
-    def get_ccc_handle_by_uuid(self, conn_handle, uuid):
-        if conn_handle in self.handle_info.keys():
-            uuid_handles = self.get_handle_by_uuid(conn_handle, uuid)
+    @classmethod
+    def get_ccc_handle_by_uuid(cls, conn_handle, uuid):
+        if conn_handle in cls.handle_info.keys():
+            uuid_handles = cls.get_handle_by_uuid(conn_handle, uuid)
             if len(uuid_handles):
                 uuid_handle = uuid_handles[0]
-                all_svc_handles = self.get_handle_by_uuid(conn_handle, CharUuid.GATT_CCC_UUID)
+                all_svc_handles = cls.get_handle_by_uuid(conn_handle, CharUuid.GATT_CCC_UUID)
                 return uuid_handle + 1 if uuid_handle + 1 in all_svc_handles else None
         return None
 
-    def get_uuid_by_handle(self, conn_handle, handle):
-        if conn_handle in self.handle_info.keys():
-            for char in self.handle_info[conn_handle].chars:
+    @classmethod
+    def get_uuid_by_handle(cls, conn_handle, handle):
+        if conn_handle in cls.handle_info.keys():
+            for char in cls.handle_info[conn_handle].chars:
                 if char.handle == handle:
                     return char.uuid
         return None
@@ -80,11 +83,8 @@ class DiscoveryHandler:
 
 # ProfileTable.info[DeviceType.gas]
 class DiscoveryManager:
-    def __init__(self):
-        self.disc_handler = DiscoveryHandler()
-
     def handle_new_conn(self, conn_handle, dev_type):
-        self.disc_handler.add_conn(conn_handle, dev_type)
+        DiscoveryHandler.add_conn(conn_handle, dev_type)
 
         # device connected, start discovery
         Dispatcher.send_msg(Messages.DEV_MTU_CFG, {"conn_handle": conn_handle})
@@ -94,26 +94,26 @@ class DiscoveryManager:
         Dispatcher.send_msg(Messages.DEV_SVC_DISCOVER, {"conn_handle": conn_handle})
 
     def handle_svc_report(self, conn_handle, svc_list):
-        self.disc_handler.add_services(conn_handle, svc_list)
+        DiscoveryHandler.add_services(conn_handle, svc_list)
 
         # Services received, discover chars if services are ok
-        if not self.disc_handler.check_device_services(conn_handle):
+        if not DiscoveryHandler.check_device_services(conn_handle):
             Dispatcher.send_msg(Messages.ERR_DEV_MISSING_SVC, {"conn_handle": conn_handle})
         else:
             Dispatcher.send_msg(msg_id=Messages.DEV_CHAR_DISCOVER,
                                 data={"conn_handle": conn_handle})
 
     def handle_char_report(self, conn_handle, char_list):
-        self.disc_handler.add_chars(conn_handle, char_list)
+        DiscoveryHandler.add_chars(conn_handle, char_list)
 
-        if not self.disc_handler.check_device_chars(conn_handle):
+        if not DiscoveryHandler.check_device_chars(conn_handle):
             Dispatcher.send_msg(Messages.ERR_DEV_MISSING_CHAR, {"conn_handle": conn_handle})
         else:
             # everything's fine enable indications/notifications
             Dispatcher.send_msg(Messages.ENABLE_DEV_INDICATION, {"conn_handle": conn_handle})
 
     def handle_ccc_enabled(self, conn_handle):
-        dev_type = self.disc_handler.handle_info[conn_handle].dev_type
+        dev_type = DiscoveryHandler.handle_info[conn_handle].dev_type
         required_char_uuid_list = ProfileTable.char_dev_map[dev_type]
-        handles = [self.disc_handler.get_handle_by_uuid(conn_handle, uuid)[0] for uuid in required_char_uuid_list]
+        handles = [DiscoveryHandler.get_handle_by_uuid(conn_handle, uuid)[0] for uuid in required_char_uuid_list]
         Dispatcher.send_msg(Messages.DEV_VALUES_DISCOVER, {"conn_handle": conn_handle})

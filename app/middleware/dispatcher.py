@@ -59,17 +59,14 @@ class Subscriptions:
         ],
 
 # OAD section
-        Messages.OAD_START: [
-            MBox.DEV
-        ],
-        Messages.OAD_ABORT: [
-            MBox.DEV
-        ],
-        Messages.OAD_COMPLETE: [
-            # TODO: front
-        ],
+        Messages.OAD_START: [ MBox.DEV ],
+        Messages.OAD_ABORT: [ MBox.DEV ],
+        Messages.OAD_COMPLETE: [ ],  # TODO: front
 
 # Scan section
+        Messages.SEARCH_DEVICES: [ MBox.DEV ],
+        Messages.SEARCH_DEVICES_RESP: [ MBox.FRONT ],
+
         Messages.SCAN_DEVICE: [ MBox.DEV ],
         Messages.SCAN_DEVICE_ABORT: [ MBox.DEV ],
         Messages.SCAN_DEVICE_RESP: [ MBox.DEV ],
@@ -77,7 +74,7 @@ class Subscriptions:
 # Establish connection section
         Messages.ESTABLISH_CONN: [ MBox.DEV ],
         Messages.ESTABLISH_CONN_ABORT: [ MBox.DEV ],
-        Messages.ESTABLISH_CONN_RESP: [ MBox.DEV, MBox.FRONT ],
+        Messages.ESTABLISH_CONN_RESP: [ MBox.DEV, MBox.FRONT],
         Messages.DEV_MTU_CFG: [ MBox.DEV ],
         Messages.DEV_MTU_CFG_RESP: [ MBox.DEV ],
 
@@ -165,6 +162,10 @@ class Subscriptions:
         Messages.DEV_INFO_READ_ACK: [MBox.FRONT],
         Messages.DEV_INFO_READ_LIST: [MBox.DEV],
         Messages.DEV_INFO_READ_LIST_ACK: [MBox.FRONT],
+
+# Updater
+        Messages.UPDATE_AVAILABLE: [MBox.DEV, MBox.FRONT],
+        Messages.UPDATE_VERSION_DISCOVERED: [MBox.UPD]
     }
 
 
@@ -183,9 +184,11 @@ class Validation:
         Messages.CENTRAL_INIT_RESP: ["central_ip", "status"],
         Messages.CENTRAL_ADJUST: [],
         Messages.CENTRAL_ADJUST_RESP: ["status"],
-        Messages.OAD_START: [],
-        Messages.OAD_ABORT: [],
-        Messages.OAD_COMPLETE: ["status"],
+        Messages.OAD_START: ["mac"],
+        Messages.OAD_ABORT: ["mac"],
+        Messages.OAD_COMPLETE: ["mac", "status"],
+        Messages.SEARCH_DEVICES: [],
+        Messages.SEARCH_DEVICES_RESP: [],
         Messages.SCAN_DEVICE: [],
         Messages.SCAN_DEVICE_ABORT: [],
         Messages.SCAN_DEVICE_RESP: ["data", "status"],
@@ -224,7 +227,8 @@ class Validation:
         Messages.DEV_INFO_READ_ACK: [],
         Messages.DEV_INFO_READ_LIST: [],
         Messages.DEV_INFO_READ_LIST_ACK: [],
-
+        Messages.UPDATE_VERSION_DISCOVERED: ["mac", "version", "type"],
+        Messages.UPDATE_AVAILABLE: ["mac", "version", "type", "file_path"],
     }
 
     @classmethod
